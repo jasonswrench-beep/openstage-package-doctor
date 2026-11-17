@@ -20,7 +20,11 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   sound. Translation is `translate/`: `inline.ts` and `xliff.ts` are OpenStage Author's XLIFF 1.2 form (its
   `tools/xliff.py`), ported to TypeScript so both programs write the same thing; `extract.ts` finds the words in any
   package's pages, captions and manifest and rebuilds each file byte for byte except the words (in its own
-  encoding); `docx.ts` is the Word table; `apply.ts` puts a translation back.
+  encoding); `docx.ts` is the Word table; `apply.ts` puts a translation back. Wrapping a PDF, a video or a folder is
+  `wrap/`: `manifests.ts` (adapted from Author's manifest writers, without schemaLocation), `runtime.ts` (the
+  tracking script that goes into the package, plain JavaScript) and `wrap.ts` (the start page and the zip). The
+  tests run the tracking script against the test player's stand-in LMS and LRS (`test/wrap.test.ts`), so what
+  Package Doctor writes is held to the rules it checks others by.
 - `app/`: the Tauri window. `src/main.ts` draws the report and `src/player.ts` the test player. The Rust side
   (`src-tauri/`) is the window and one command, `check_accessibility` (`src-tauri/src/a11y.rs`): the page sends it
   the package's pages, style sheets and documents in one message (`src/a11y.ts`, `packMessage`), and it runs the
@@ -29,7 +33,7 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   player's "Check this page's accessibility" sends the page as it is now, without its scripts. `src/player-sw.ts` is a service worker (scope `/play/`) that hands each request a
   course makes to the window over a BroadcastChannel; the window answers from the zip. This keeps the course on the
   window's own site, which SCORM needs (the course looks for `window.API` in the windows above it), with no Rust.
-  `src/changes.ts` is the Change the package view and `src/shrink.ts` makes pictures and MP4 video smaller with the
+  `src/wrap-view.ts` is Make a course package. `src/changes.ts` is the Change the package view and `src/shrink.ts` makes pictures and MP4 video smaller with the
   browser's own codecs (WebCodecs), reading MP4 with mp4box.js and writing it with mp4-muxer. No ffmpeg: it is LGPL
   or GPL. Saving uses the window's Save As box (`showSaveFilePicker`); WebView2 will not save into system folders
   such as AppData.

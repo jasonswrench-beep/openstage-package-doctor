@@ -468,6 +468,9 @@ export class PlaySession {
     const refusals = new Map<string, { entry: LogEntry; times: number }>();
     for (const e of this.log) {
       if (e.kind !== "call" || !e.refused) continue;
+      // Reading a SCORM 2004 value nothing has set yet (403) is answered with "" and is harmless: the log shows it,
+      // but it is not a finding, or every course that looks before it writes would be reported.
+      if (/^GetValue\(/.test(e.text) && /^Error 403\b/.test(e.refused)) continue;
       const key = `${e.text.replace(/,.*$/, "").replace(/\)$/, "")}|${e.refused}`;
       const r = refusals.get(key);
       if (r) r.times++;

@@ -1,6 +1,6 @@
 [package]
 name = "openstage-package-doctor"
-version = "0.5.0"
+version = "0.6.0"
 description = "OpenStage Package Doctor: opens a course package without its source file and checks whether it will run"
 authors = ["Jason S. Wrench"]
 edition = "2021"

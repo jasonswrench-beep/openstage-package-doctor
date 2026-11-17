@@ -5,7 +5,7 @@ package from a publisher or a colleague and needs to know what is inside it befo
 
 Part of the OpenStage suite. Free and open source under the Apache License 2.0.
 
-## What it does today (0.5.0)
+## What it does today (0.6.0)
 
 - **Opens** SCORM 1.2, SCORM 2004 (2nd, 3rd and 4th editions), xAPI (`tincan.xml`) and cmi5 packages from a `.zip`,
   and shows:
@@ -29,6 +29,12 @@ Part of the OpenStage suite. Free and open source under the Apache License 2.0.
   checks only a person can make and what the check could not do. Most authoring tools build their pages with scripts,
   so the test player also checks a page **as the learner sees it** (Check this page's accessibility). The findings
   warn and never block.
+- **Makes a package** from a PDF, a video or a folder of web pages, in SCORM 1.2, SCORM 2004, cmi5 or xAPI: a
+  plain, accessible start page (the video with its captions, the document with a link to open it on its own, the
+  folder's own pages untouched in a frame), a small tracking script, and the manifest. It counts as finished when it is
+  opened, when the learner presses I have finished, or when the video has been watched to the end; a video's place
+  is kept for a learner who comes back. A zip of web pages that is not a course yet can be wrapped from its report.
+  The new package opens at once, to check it and play it.
 - It tells a SCORM course from other files called `imsmanifest.xml`, such as a question library exported from an LMS.
 - **Plays it** in a test player, the way an LMS would, with a log beside it of everything the course tells the LMS:
   - for SCORM 1.2 and 2004, every call to the LMS's API, what the LMS answered, and why it refused a value (a status
@@ -61,7 +67,8 @@ Part of the OpenStage suite. Free and open source under the Apache License 2.0.
 
 Nothing is uploaded and nothing is changed: the package is only read, on your computer. No AI is involved.
 
-What's next is in [ROADMAP.md](ROADMAP.md): wrapping a PDF, a video or a folder of pages as a package.
+Every item on the development list is built; [ROADMAP.md](ROADMAP.md) lists what is left from each, and
+[TESTING-TODO.md](TESTING-TODO.md) what still needs a person, real packages or a real LMS.
 
 ## Using it
 
@@ -85,8 +92,8 @@ Needs Node.js 22.18 or later. Building the program needs Rust as well.
 
 - `core/` (TypeScript, no dependencies but fflate): reading zips and manifests, every check, and the test player's
   stand-in LMS and LRS (`core/src/play/`), writing a new zip (`core/src/write.ts`) and choosing what to make smaller
-  (`core/src/media/`), and translation (`core/src/translate/`). The window, the command line and the tests all use
-  it.
+  (`core/src/media/`), translation (`core/src/translate/`) and wrapping a file or folder as a package
+  (`core/src/wrap/`). The window, the command line and the tests all use it.
 - `app/`: the window, a Tauri program (a Rust shell around a web page), with the suite's look. The Rust side runs the
   suite's accessibility engine (`openstage-a11y`, from openstage-core) on the files the page sends it. The test player's
   service worker serves the course's pages from the open zip on the window's own site, so a SCORM course finds the

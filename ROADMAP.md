@@ -11,7 +11,18 @@ build-session work, M is one to two weeks.
 | 4 | Compress media and replace any file inside the zip | LMS upload limits bite, and fixing one video should not need the source | M | **Done in 0.3.0** |
 | 5 | Accessibility preflight on C2 | The same report Author and Scroll give, for packages made anywhere | S | **Done in 0.4.0** |
 | 6 | Extract all text to XLIFF or .docx and put translations back (C6) | Translate a package with no source file | M | **Done in 0.5.0**, borrowing Author's form of XLIFF |
-| 7 | Wrap a PDF, a video or an HTML folder as a package | Small, and often what instructors actually need | S | Next. Author's manifest writers (`player/src/*-manifest.ts`) are the start |
+| 7 | Wrap a PDF, a video or an HTML folder as a package | Small, and often what instructors actually need | S | **Done in 0.6.0** |
+
+## Left from item 7
+
+- One unit per package, with no score or pass mark: a wrapped file is opened, read or watched, not marked.
+- A PDF counts as finished when it is opened or when the button is pressed: how far a learner read is not known.
+- A video's place is kept for SCORM; for xAPI and cmi5 it is not (no State document is written).
+- Sound files (MP3) are not wrapped on their own; a video's sound is.
+- A folder's pages are shown in a frame. A site that breaks out of frames, or looks for the LMS itself, may need
+  its own tracking instead.
+- The course's id for cmi5 and xAPI is made up each time a package is wrapped, so wrapping the same file again makes
+  a different course as far as an LRS is concerned. Keeping it the same would need the id asked for or remembered.
 
 ## Left from item 6
 

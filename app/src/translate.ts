@@ -13,7 +13,7 @@ import { formatBytes } from "../../core/src/open.ts";
 import { saveFile, type PackageChanges } from "./changes.ts";
 import { h } from "./dom.ts";
 
-const LANGUAGES: [string, string][] = [
+export const LANGUAGES: [string, string][] = [
   ["ar", "Arabic"], ["zh-CN", "Chinese (simplified)"], ["zh-TW", "Chinese (traditional)"], ["cs", "Czech"], ["da", "Danish"], ["nl", "Dutch"],
   ["en", "English"], ["en-GB", "English (UK)"], ["en-US", "English (US)"], ["fi", "Finnish"], ["fr", "French"], ["fr-CA", "French (Canada)"],
   ["de", "German"], ["el", "Greek"], ["he", "Hebrew"], ["hi", "Hindi"], ["hu", "Hungarian"], ["id", "Indonesian"], ["it", "Italian"],

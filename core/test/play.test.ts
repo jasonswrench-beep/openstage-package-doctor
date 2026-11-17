@@ -336,3 +336,15 @@ test("cmi5: a statement from the last launch that arrives after the next has beg
   send(cmi5Statement(lms, "initialized"), second);
   assert.deepEqual(lms.problems(), []);
 });
+
+test("reading a SCORM 2004 value nothing has set yet is in the log but is not a finding", () => {
+  const s = session({ "imsmanifest.xml": scorm2004(), "index.html": PAGE });
+  s.launch(0);
+  s.api2004!.Initialize("");
+  assert.equal(s.api2004!.GetValue("cmi.location"), "");
+  s.api2004!.SetValue("cmi.completion_status", "completed");
+  s.api2004!.Terminate("");
+  s.end();
+  assert.ok(s.log.some((e) => e.text === 'GetValue("cmi.location")' && /^Error 403/.test(e.refused ?? "")));
+  assert.deepEqual(ids(s), []);
+});

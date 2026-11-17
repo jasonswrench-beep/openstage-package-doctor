@@ -13,6 +13,7 @@ import { badge, copyText, findingItem, h, type Child } from "./dom.ts";
 import { icon } from "./icons.ts";
 import { openPlayer } from "./player.ts";
 import { openChanges, PackageChanges } from "./changes.ts";
+import { openWrap } from "./wrap-view.ts";
 import { a11yText, a11yView, canCheck, checkAccessibility, filesToCheck, type PackageCheck } from "./a11y.ts";
 import { buildTree, type Folder } from "./tree.ts";
 
@@ -79,6 +80,8 @@ function welcome(): void {
   copyButton.disabled = true;
   const button = h("button", { type: "button", class: "button button--primary button--large" }, icon("open"), "Open a package...");
   button.addEventListener("click", () => fileInput.click());
+  const wrapButton = h("button", { type: "button", class: "button" }, "Make a package from a PDF, a video or a folder...");
+  wrapButton.addEventListener("click", () => openWrap({ main, say, back: () => welcome(), open: (bytes, name) => openBytes(bytes, name) }));
   main.replaceChildren(
     h(
       "section",
@@ -88,6 +91,9 @@ function welcome(): void {
       button,
       h("p", { class: "muted" }, "Or drop a .zip anywhere in this window. Ctrl+O also opens one."),
       h("p", { class: "muted" }, "The package is read on this computer and nothing is changed or uploaded."),
+      h("h2", {}, "No package yet?"),
+      h("p", {}, "Wrap a PDF, a video or a folder of web pages as a SCORM, cmi5 or xAPI package an LMS can import."),
+      wrapButton,
     ),
   );
 }
@@ -193,6 +199,25 @@ function show(r: OpenedPackage, focusSection?: string): void {
       play.skipped.length ? h("ul", { class: "plain" }, ...play.skipped.map((s) => h("li", {}, h("strong", {}, s.title), ` cannot be played here. ${s.why}`))) : null,
       runs ? h("p", { class: "muted" }, `So far the test player has launched it ${runs === 1 ? "once" : `${runs} times`} and found ${earlier.length === 0 ? "nothing" : earlier.length === 1 ? "one thing" : `${earlier.length} things`} to look at. They are listed beside the course in the player.`) : null,
     );
+  }
+
+  // Wrapping it: a zip of web pages that is not a course package yet.
+  const pages = r.files.filter((f) => /\.html?$/i.test(f.path));
+  if (archive && (r.kind === "unknown" || r.kind === "content-package") && pages.length) {
+    const button = h("button", { type: "button", class: "button button--primary" }, "Wrap it as a course package...");
+    button.addEventListener("click", () => {
+      const files = new Map<string, Uint8Array>();
+      for (const e of archive!.entries) {
+        if (e.isDirectory || e.encrypted) continue;
+        try {
+          files.set(e.path, archive!.read(e));
+        } catch {
+          // a damaged file is left out; the report already says so
+        }
+      }
+      openWrap({ main, say, back: () => show(r, "wrap"), open: (bytes, name) => openBytes(bytes, name) }, { kind: "site", name: r.fileName.replace(/\.zip$/i, ""), files });
+    });
+    section("wrap", "Wrap it", h("p", {}, `This zip has ${pages.length} web page${pages.length === 1 ? "" : "s"} but is not a course package an LMS can import. Package Doctor can wrap it as one: a SCORM, cmi5 or xAPI package that starts at the page you choose and tells the LMS when the learner has finished.`), h("div", { class: "play-start" }, button));
   }
 
   // Changing it.

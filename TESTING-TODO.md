@@ -31,6 +31,11 @@ The automated tests (`RUN TESTS.bat`) build every package they check. These need
 - [ ] Translation: fill in the Word table in Word, as a translator would (tracked changes on and off), and bring it
       back. Look at the table in Word too: is it easy to work in?
 - [ ] Translation of a real hand-made course, played afterwards in the test player in the new language.
+- [ ] Wrapped packages in a real LMS (SCORM Cloud, Moodle, Canvas, Brightspace), in all four standards: does it
+      import, does the start page show the PDF or video, and does the LMS record completed by each rule?
+- [ ] A wrapped package's start page with a screen reader and by keyboard: the video's controls and captions, the
+      document's frame and link, the I have finished button and what it says after.
+- [ ] Make a course package with a screen reader: the three groups, the choices read with their meaning.
 - [ ] The test player with a screen reader (NVDA): the status line says when the course starts, finishes and is
       refused; the summary and the log can be reached and scrolled by keyboard.
 
@@ -44,6 +49,17 @@ Read-only, the reports checked by eye:
   `favicon.png`, all real; 0.07 seconds.
 - A Brightspace question library export: recognised as a question library, not a SCORM course.
 - A 96 MB program archive with 517 backslashed names and a manifest deep in a folder: both reported; 0.1 seconds.
+
+Making a package, in the built program, the browser preview and the tests:
+
+- A PDF wrapped in each of the four standards opens with no problems or warnings. The tracking script, run in the
+  tests against the test player's strict stand-ins, keeps every rule for SCORM 1.2, SCORM 2004, cmi5 and xAPI: started,
+  completed and left, with nothing refused.
+- In the preview: a PDF wrapped as cmi5, opened and played: the fetch, the launch data and initialized, completed and
+  terminated in order, the move-on rule met, no findings. A zip of plain web pages wrapped from its report as SCORM
+  2004: its pages shown in the frame, completed on I have finished, exit normal.
+- In the built program, with the real file picker and Save As box: a 36-second lesson video wrapped as SCORM 1.2,
+  done at the end; it plays on the start page in the test player, incomplete until watched.
 
 Translation, in the browser preview and the tests:
 

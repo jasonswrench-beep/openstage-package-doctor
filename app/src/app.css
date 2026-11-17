@@ -296,6 +296,8 @@ select {
 .changes-view { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--os-space-4); }
 .options { border: 1px solid var(--os-divider); border-radius: var(--os-radius); padding: var(--os-space-2) var(--os-space-4); margin: 0 0 var(--os-space-3); }
 .options legend { font-weight: 600; padding: 0 var(--os-space-1); }
+.panel.options { margin: 0; }
+.options--inner { margin: var(--os-space-3) 0 0; }
 .option { padding: var(--os-space-2) 0; }
 .option + .option { border-top: 1px solid var(--os-divider); }
 .option-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-1); }
