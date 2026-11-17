@@ -1,0 +1,21 @@
+{
+  "name": "openstage-package-doctor-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The OpenStage Package Doctor window: a Tauri shell around a web page that uses ../core.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "node build.mjs && node dev-server.mjs",
+    "test": "node --test src/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,20 @@
+# Build output
+node_modules/
+dist/
+target/
+app/web/main.js
+app/web/style.css
+app/src-tauri/gen/
+
+# Packages you are checking. Course packages can hold other people's work: keep them out of the repository.
+samples/
+
+# Personal Claude Code instructions, not shared with the project
+CLAUDE.local.md
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+**/*.rs.bk
+*.pdb

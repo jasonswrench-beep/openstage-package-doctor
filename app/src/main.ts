@@ -1,0 +1,323 @@
+// The Package Doctor window: open a package (button, Ctrl+O or drop), then show what is in it and whether it will run.
+// Everything happens on this computer; nothing is uploaded. Accessibility: one heading per section (h2), the report's
+// findings under h3 and h4 so a screen reader can move by heading; states always in words; focus goes to the report's
+// heading when a package opens, and the status line says the verdict once.
+
+import { counts, formatBytes, openPackage, verdict } from "../../core/src/open.ts";
+import { reportText } from "../../core/src/report.ts";
+import { SEVERITY_ORDER, SEVERITY_WORDS, type Finding, type Severity } from "../../core/src/findings.ts";
+import type { OpenedPackage, OutlineNode } from "../../core/src/model.ts";
+import { icon, type IconName } from "./icons.ts";
+import { buildTree, type Folder } from "./tree.ts";
+
+type Child = Node | string | null | undefined | false;
+
+function h<K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, string | boolean> = {}, ...children: Child[]): HTMLElementTagNameMap[K] {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v === false) continue;
+    if (k === "class") el.className = String(v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children) if (c !== null && c !== undefined && c !== false) el.append(c);
+  return el;
+}
+
+const main = document.getElementById("main")!;
+const status = document.getElementById("status")!;
+const shellDoc = document.getElementById("shell-doc")!;
+const openButton = document.getElementById("open-button") as HTMLButtonElement;
+const copyButton = document.getElementById("copy-button") as HTMLButtonElement;
+const fileInput = document.getElementById("file-input") as HTMLInputElement;
+const dropVeil = document.getElementById("drop-veil")!;
+
+openButton.append(icon("open"), "Open package...");
+copyButton.append(icon("copy"), "Copy report");
+
+let current: OpenedPackage | undefined;
+
+function say(message: string): void {
+  // Emptied first, so the same words said twice are still read out.
+  status.textContent = "";
+  window.setTimeout(() => (status.textContent = message), 50);
+}
+
+const BADGE_ICON: Record<Severity, IconName> = { problem: "problem", warning: "warning", note: "note" };
+
+function badge(severity: Severity): HTMLElement {
+  return h("span", { class: `badge badge--${severity}` }, icon(BADGE_ICON[severity]), SEVERITY_WORDS[severity]);
+}
+
+function welcome(): void {
+  current = undefined;
+  shellDoc.textContent = "";
+  copyButton.disabled = true;
+  const button = h("button", { type: "button", class: "button button--primary button--large" }, icon("open"), "Open a package...");
+  button.addEventListener("click", () => fileInput.click());
+  main.replaceChildren(
+    h(
+      "section",
+      { class: "welcome", "aria-labelledby": "welcome-title" },
+      h("h1", { id: "welcome-title" }, "Open a course package"),
+      h("p", {}, "A SCORM 1.2, SCORM 2004, xAPI or cmi5 package, as a .zip file. Package Doctor shows what is inside it and checks whether it will run in an LMS."),
+      button,
+      h("p", { class: "muted" }, "Or drop a .zip anywhere in this window. Ctrl+O also opens one."),
+      h("p", { class: "muted" }, "The package is read on this computer and nothing is changed or uploaded."),
+    ),
+  );
+}
+
+async function openFile(file: File): Promise<void> {
+  say(`Opening ${file.name}...`);
+  main.setAttribute("aria-busy", "true");
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const report = openPackage(bytes, file.name);
+    show(report);
+  } catch (e) {
+    main.replaceChildren(
+      h("section", { class: "welcome" }, h("h1", { tabindex: "-1", id: "report-title" }, `${file.name} could not be opened`), h("p", {}, e instanceof Error ? e.message : String(e))),
+    );
+    document.getElementById("report-title")?.focus();
+    say(`${file.name} could not be opened.`);
+  } finally {
+    main.removeAttribute("aria-busy");
+  }
+}
+
+function show(r: OpenedPackage): void {
+  current = r;
+  copyButton.disabled = false;
+  shellDoc.textContent = r.fileName;
+  const c = counts(r.findings);
+  const state: Severity | "ok" = c.problem ? "problem" : c.warning ? "warning" : "ok";
+  const stateWord = c.problem ? "Problems found" : c.warning ? "Warnings only" : "No problems found";
+  const sections: { id: string; label: string; node: HTMLElement }[] = [];
+  const section = (id: string, label: string, ...children: Child[]) => {
+    const node = h("section", { class: "panel", id, "aria-labelledby": `${id}-h` }, h("h2", { id: `${id}-h` }, label), ...children);
+    sections.push({ id, label, node });
+  };
+
+  // Will it run?
+  const groups = SEVERITY_ORDER.filter((s) => r.findings.some((f) => f.severity === s)).map((s) => {
+    const list = r.findings.filter((f) => f.severity === s);
+    const heading = h("h3", {}, badge(s), ` ${SEVERITY_WORDS[s]}s (${list.length})`);
+    const items = h("ul", { class: "findings", role: "list" }, ...list.map(findingItem));
+    if (s === "note") return h("details", { class: "group" }, h("summary", {}, heading), items);
+    return h("div", { class: "group" }, heading, items);
+  });
+  section("check", "Will it run?", h("p", { class: "lead" }, verdict(r)), ...groups);
+
+  // Package details and where it starts.
+  const facts: [string, string][] = [
+    ["Kind", r.kindLabel],
+    ...(r.title ? [["Title", r.title] as [string, string]] : []),
+    ...(r.identifier ? [["Identifier", r.identifier] as [string, string]] : []),
+    ...(r.manifest ? [["Manifest", r.manifest] as [string, string]] : []),
+    ["Size", `${formatBytes(r.zipSize)} as a zip, ${formatBytes(r.totals.size)} unpacked`],
+    ["Files", String(r.totals.files)],
+  ];
+  section(
+    "package",
+    "Package",
+    h("dl", { class: "facts" }, ...facts.flatMap(([k, v]) => [h("dt", {}, k), h("dd", {}, v)])),
+    r.launches.length
+      ? h(
+          "div",
+          {},
+          h("h3", {}, r.launches.length === 1 ? "Starts at" : `Starts at (${r.launches.length} places)`),
+          h(
+            "ul",
+            { class: "plain" },
+            ...r.launches.map((l) =>
+              h("li", {}, h("strong", {}, l.title), ": ", h("code", {}, l.href), l.tracked === false ? " (not tracked: an asset)" : "", l.file === undefined && !/^[a-z]+:/i.test(l.href) ? " (missing)" : ""),
+            ),
+          ),
+        )
+      : null,
+  );
+
+  // Tracking settings.
+  section(
+    "tracking",
+    "Tracking settings",
+    r.tracking.length
+      ? h(
+          "div",
+          { class: "table-wrap" },
+          h(
+            "table",
+            {},
+            h("caption", { class: "visually-hidden" }, "Tracking settings from the manifest"),
+            h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Part"), h("th", { scope: "col" }, "Setting"), h("th", { scope: "col" }, "Value"), h("th", { scope: "col" }, "What it means"))),
+            h(
+              "tbody",
+              {},
+              ...r.tracking.map((t) =>
+                h("tr", {}, h("td", {}, t.scope), h("th", { scope: "row" }, t.name), h("td", {}, t.value), h("td", {}, t.meaning, " ", h("span", { class: "muted" }, `(${t.source})`))),
+              ),
+            ),
+          ),
+        )
+      : h("p", {}, r.kind === "unknown" || r.kind === "content-package" || r.kind === "aicc" ? "None: there is no course manifest to read them from." : "None in the manifest. The LMS records what the course itself reports."),
+  );
+
+  // Outline.
+  if (r.outline.length) section("outline", "Course outline", outlineList(r.outline));
+
+  // Files.
+  section("files", "Files", h("p", {}, `${r.totals.files} files, ${formatBytes(r.totals.size)} unpacked.`), filesTree(r));
+
+  // Not checked.
+  section("limits", "Not checked", h("ul", { class: "plain" }, ...r.limits.map((l) => h("li", {}, l))));
+
+  const title = h("h1", { id: "report-title", tabindex: "-1" }, r.title ?? r.fileName);
+  main.replaceChildren(
+    h(
+      "div",
+      { class: "report" },
+      h(
+        "div",
+        { class: "report-head" },
+        title,
+        h("p", { class: "muted" }, `${r.kindLabel} · ${r.fileName}`),
+        h(
+          "div",
+          { class: `verdict verdict--${state}` },
+          icon(state === "ok" ? "ok" : state),
+          h("div", {}, h("strong", {}, stateWord), h("span", {}, `${c.problem} problem${c.problem === 1 ? "" : "s"}, ${c.warning} warning${c.warning === 1 ? "" : "s"}, ${c.note} note${c.note === 1 ? "" : "s"}`)),
+        ),
+        h("nav", { "aria-label": "Sections of the report", class: "toc" }, h("ul", { role: "list" }, ...sections.map((s) => h("li", {}, h("a", { href: `#${s.id}` }, s.label))))),
+      ),
+      ...sections.map((s) => s.node),
+    ),
+  );
+  main.scrollTop = 0;
+  window.scrollTo(0, 0);
+  title.focus();
+  say(`Opened ${r.fileName}. ${verdict(r)}`);
+}
+
+function findingItem(f: Finding): HTMLElement {
+  return h(
+    "li",
+    { class: `finding finding--${f.severity}` },
+    h("h4", {}, f.title),
+    h("p", {}, f.detail),
+    f.file ? h("p", { class: "where" }, "In ", h("code", {}, f.file), f.line ? `, line ${f.line}` : "") : null,
+    h("p", { class: "fix" }, h("strong", {}, "What to do: "), f.fix),
+    h("p", { class: "check-id" }, `Check: ${f.id}`),
+  );
+}
+
+function outlineList(nodes: OutlineNode[]): HTMLElement {
+  return h(
+    "ul",
+    { class: "outline" },
+    ...nodes.map((n) =>
+      h(
+        "li",
+        {},
+        h("span", { class: "outline-title" }, n.title),
+        n.launches ? h("span", { class: "muted" }, " opens ", h("code", {}, n.launches)) : null,
+        n.hidden ? h("span", { class: "muted" }, " (hidden from the menu)") : null,
+        n.children.length ? outlineList(n.children) : null,
+      ),
+    ),
+  );
+}
+
+function filesTree(r: OpenedPackage): HTMLElement {
+  const root = buildTree(r.files);
+  const starts = new Set(r.launches.map((l) => l.file).filter(Boolean));
+  const fileRow = (path: string, name: string, size: number, packed: number) =>
+    h(
+      "li",
+      { class: "file" },
+      icon("file"),
+      h("span", { class: "file-name" }, name),
+      path === r.manifest ? h("span", { class: "tag" }, "manifest") : null,
+      starts.has(path) ? h("span", { class: "tag" }, "start page") : null,
+      h("span", { class: "file-size" }, formatBytes(size), packed < size ? h("span", { class: "muted" }, ` (${formatBytes(packed)} packed)`) : null),
+    );
+  const folderList = (folder: Folder): HTMLElement =>
+    h(
+      "ul",
+      { class: "tree", role: "list" },
+      ...folder.folders.map((sub) => {
+        const details = h(
+          "details",
+          {},
+          h("summary", {}, icon("folder"), h("span", { class: "file-name" }, sub.name), h("span", { class: "file-size" }, `${sub.fileCount} file${sub.fileCount === 1 ? "" : "s"}, ${formatBytes(sub.size)}`)),
+        );
+        // A folder's contents are drawn when it is first opened, so a package of thousands of files opens at once.
+        details.addEventListener("toggle", () => {
+          if (details.open && details.childElementCount === 1) details.append(folderList(sub));
+        }, { once: false });
+        return h("li", { class: "folder" }, details);
+      }),
+      ...folder.files.map((f) => fileRow(f.path, f.path.slice(f.path.lastIndexOf("/") + 1), f.size, f.packedSize)),
+    );
+  return folderList(root);
+}
+
+// Opening: the button, Ctrl+O, and dropping a file.
+openButton.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files?.[0];
+  fileInput.value = "";
+  if (file) void openFile(file);
+});
+copyButton.addEventListener("click", async () => {
+  if (!current) return;
+  const text = reportText(current);
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const area = h("textarea", { class: "visually-hidden", "aria-hidden": "true" });
+    area.value = text;
+    document.body.append(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+  say("The report is copied. Paste it into an email or a document.");
+});
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "o") {
+    e.preventDefault();
+    fileInput.click();
+  }
+});
+// Outside boxes for typing, the browser's own menu (Back, Reload, Print) never shows, as in the rest of the suite.
+// Selected text can still be copied with Ctrl+C.
+document.addEventListener("contextmenu", (e) => {
+  if (!(e.target as HTMLElement).closest("input, textarea")) e.preventDefault();
+});
+
+let dragDepth = 0;
+const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files");
+window.addEventListener("dragenter", (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  dragDepth++;
+  dropVeil.hidden = false;
+});
+window.addEventListener("dragover", (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+});
+window.addEventListener("dragleave", () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) dropVeil.hidden = true;
+});
+window.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  dropVeil.hidden = true;
+  const file = e.dataTransfer?.files?.[0];
+  if (file) void openFile(file);
+});
+
+welcome();
