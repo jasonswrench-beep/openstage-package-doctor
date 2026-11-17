@@ -14,6 +14,9 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   it together (`open.ts`), the text report (`report.ts`) and the command line (`cli.ts`). Every finding's words are in
   `findings.ts`.
 - `app/`: the Tauri window. `src/main.ts` draws the report; the Rust side (`src-tauri/`) is only the window.
+- `branding/OpenStage_Package_Doctor.svg` is the program's icon (the author's, November 17, 2026). `app/web/logo.svg`
+  is a copy of it, and `app/src-tauri/icons/` is made from it with `npx tauri icon` (then delete the android and ios
+  folders it adds).
 - `docs/checks.md` is generated from `core/src/findings.ts` (`npm run docs` in `core/`); a test fails when it is stale.
 
 ## Rules

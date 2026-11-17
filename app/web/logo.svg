@@ -1,6 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0d1b30"/>
-  <path d="M30 10 48 19v22L30 50 12 41V19Z M12 19l18 9 18-9 M30 28v22" fill="none" stroke="#a3e635" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="47" cy="47" r="12" fill="#ffffff"/>
-  <path d="M47 40.5v13 M40.5 47h13" stroke="#4d7c0f" stroke-width="4.5" stroke-linecap="round"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"
+     viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">OpenStage Package Doctor</title>
+  <desc id="description">A lime green shipping carton with a plus sign on its right face, on a rounded navy tile.</desc>
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="768" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#102037"/>
+      <stop offset="1" stop-color="#0B172A"/>
+    </linearGradient>
+    <linearGradient id="doctor-lime" x1="180" y1="160" x2="844" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C7F36A"/>
+      <stop offset="1" stop-color="#9BD940"/>
+    </linearGradient>
+  </defs>
+  <g id="Tile">
+    <rect width="1024" height="1024" rx="164" fill="url(#navy)"/>
+  </g>
+  <g id="Symbol" fill="none" stroke="url(#doctor-lime)" stroke-width="52"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="carton-outline" d="M512 163 L841 332 V669 L512 849 L183 669 V332 Z"/>
+    <path id="carton-folds" d="M183 332 L512 507 L841 332 M512 507 V849"/>
+    <path id="packing-seam" d="M350 246 L679 418"/>
+    <path id="doctor-plus" d="M680 495 V650 M603 573 H757"/>
+  </g>
 </svg>

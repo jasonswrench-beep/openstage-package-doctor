@@ -1,7 +1,7 @@
 /* OpenStage Package Doctor's own styles, after the suite's shared values (openstage-ui.css, version 1).
    Its colour is the green of its mark in OpenStage Hub's catalog (#4D7C0F). Measured: white words on it 5.0:1; the
-   deeper green, used for any words in the product colour, 7.1:1 on white and 6.3:1 on the tint; the light green of the
-   logo on the navy bar 11.5:1 and its name's green 13.2:1. */
+   deeper green, used for any words in the product colour, 7.1:1 on white and 6.3:1 on the tint; the icon's lime on the
+   navy bar 10.7:1 or more and its name's green 13.2:1. */
 
 :root {
   --pd-action: #4d7c0f;
@@ -9,7 +9,7 @@
   --pd-action-text: #3f6212;
   --pd-tint: #ecf5dd;
   --pd-on-shell: #bef264;
-  --pd-logo: #a3e635;
+  --pd-logo: #9bd940; /* the darker end of the icon's lime (branding/OpenStage_Package_Doctor.svg) */
 
   --os-accent: var(--pd-action);
   --os-accent-hover: var(--pd-action-hover);
