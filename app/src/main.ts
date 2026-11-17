@@ -13,6 +13,7 @@ import { badge, copyText, findingItem, h, type Child } from "./dom.ts";
 import { icon } from "./icons.ts";
 import { openPlayer } from "./player.ts";
 import { openChanges, PackageChanges } from "./changes.ts";
+import { a11yText, a11yView, canCheck, checkAccessibility, filesToCheck, type PackageCheck } from "./a11y.ts";
 import { buildTree, type Folder } from "./tree.ts";
 
 const main = document.getElementById("main")!;
@@ -30,6 +31,36 @@ let current: OpenedPackage | undefined;
 /** The open zip, for the test player, and the player's sitting once it has been opened. */
 let archive: ZipArchive | undefined;
 let playSession: PlaySession | undefined;
+/** Each package's accessibility check, once it has run (it runs once per package opened). */
+const a11yChecks = new WeakMap<OpenedPackage, PackageCheck>();
+
+/** Fills the Accessibility section: runs the check the first time, and draws it. */
+function fillAccessibility(r: OpenedPackage, into: HTMLElement): void {
+  const done = a11yChecks.get(r);
+  if (done) {
+    into.replaceChildren(...a11yView(done, true));
+    return;
+  }
+  if (!archive || !filesToCheck(r, archive).length) {
+    into.replaceChildren(h("p", {}, "There are no pages or documents in the package for the accessibility rules to read."));
+    return;
+  }
+  if (!canCheck()) {
+    into.replaceChildren(h("p", {}, "The accessibility check runs in the Package Doctor program; this browser preview cannot run it."));
+    return;
+  }
+  into.replaceChildren(h("p", { class: "muted" }, "Checking the pages and documents..."));
+  const from = archive;
+  checkAccessibility(r, from)
+    .then((check) => {
+      a11yChecks.set(r, check);
+      if (into.isConnected) into.replaceChildren(...a11yView(check, true));
+    })
+    .catch((e) => {
+      if (into.isConnected) into.replaceChildren(h("p", {}, `The accessibility check could not run: ${e instanceof Error ? e.message : String(e)}`));
+    });
+}
+
 /** The changes being gathered for a new package, once the person has started some. */
 let changes: PackageChanges | undefined;
 
@@ -109,6 +140,11 @@ function show(r: OpenedPackage, focusSection?: string): void {
   });
   section("check", "Will it run?", h("p", { class: "lead" }, verdict(r)), ...groups);
 
+  // Accessibility, checked with the suite's rules; it fills in when the check is done.
+  const a11yBody = h("div", {});
+  section("a11y", "Accessibility", a11yBody);
+  fillAccessibility(r, a11yBody);
+
   // Package details and where it starts.
   const facts: [string, string][] = [
     ["Kind", r.kindLabel],
@@ -145,7 +181,7 @@ function show(r: OpenedPackage, focusSection?: string): void {
     const choose = play.playable.length > 1 ? h("select", { id: "play-part" }, ...play.playable.map((p) => h("option", { value: String(p.index) }, `${p.index + 1}. ${p.title}${p.tracked ? "" : " (asset)"}`))) : null;
     button.addEventListener("click", () => {
       playSession ??= new PlaySession(r, archive!, location.origin);
-      void openPlayer(playSession, { main, say, back: () => show(r, "play") }, choose ? Number(choose.value) : 0);
+      void openPlayer(playSession, { main, say, archive, back: () => show(r, "play") }, choose ? Number(choose.value) : 0);
     });
     const earlier = playSession?.findings() ?? [];
     const runs = playSession?.log.filter((e) => e.kind === "launch").length ?? 0;
@@ -306,7 +342,8 @@ fileInput.addEventListener("change", () => {
 });
 copyButton.addEventListener("click", async () => {
   if (!current) return;
-  await copyText(reportText(current));
+  const check = a11yChecks.get(current);
+  await copyText(reportText(current) + (check ? a11yText(check) : ""));
   say("The report is copied. Paste it into an email or a document.");
 });
 document.addEventListener("keydown", (e) => {

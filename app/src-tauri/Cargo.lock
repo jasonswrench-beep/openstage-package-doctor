@@ -2173,9 +2173,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
-name = "openstage-package-doctor"
-version = "0.3.0"
+name = "openstage-a11y"
+version = "0.1.0"
+source = "git+https://github.com/jasonswrench-beep/openstage-core?tag=a11y-v0.1.0#40c0743cca1566260e4f75028df9f00f95fe07e4"
 dependencies = [
+ "flate2",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "openstage-package-doctor"
+version = "0.4.0"
+dependencies = [
+ "openstage-a11y",
  "serde",
  "serde_json",
  "tauri",

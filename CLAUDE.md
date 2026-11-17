@@ -18,8 +18,12 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   accepts and another refuses shows as refused, with the reason. Writing a new package is `write.ts` (files not
   changed are copied exactly as stored); `media/shrink.ts` chooses what to make smaller and `media/wav.ts` does WAV
   sound.
-- `app/`: the Tauri window. `src/main.ts` draws the report and `src/player.ts` the test player; the Rust side
-  (`src-tauri/`) is only the window. `src/player-sw.ts` is a service worker (scope `/play/`) that hands each request a
+- `app/`: the Tauri window. `src/main.ts` draws the report and `src/player.ts` the test player. The Rust side
+  (`src-tauri/`) is the window and one command, `check_accessibility` (`src-tauri/src/a11y.rs`): the page sends it
+  the package's pages, style sheets and documents in one message (`src/a11y.ts`, `packMessage`), and it runs the
+  suite's engine, `openstage-a11y` at tag `a11y-v0.1.0`, on them in memory with the engine's public parts (its own
+  folder check reads only from disk). `cargo test` in `src-tauri` tests it; RUN TESTS.bat runs it too. The test
+  player's "Check this page's accessibility" sends the page as it is now, without its scripts. `src/player-sw.ts` is a service worker (scope `/play/`) that hands each request a
   course makes to the window over a BroadcastChannel; the window answers from the zip. This keeps the course on the
   window's own site, which SCORM needs (the course looks for `window.API` in the windows above it), with no Rust.
   `src/changes.ts` is the Change the package view and `src/shrink.ts` makes pictures and MP4 video smaller with the
@@ -55,8 +59,9 @@ Anything not on `ROADMAP.md` is agreed with the user first.
 
 ## Shared pieces (openstage-core)
 
-- C2, the accessibility rule engine (`openstage-a11y`, tag `a11y-v0.1.0`), is item 5. It checks web pages and folders
-  of pages, so the preflight unpacks the package and runs it on the pages.
+- C2, the accessibility rule engine (`openstage-a11y`, tag `a11y-v0.1.0`), is used for item 5, unchanged. Its status
+  words and report are A11Y-1 section 4; Package Doctor shows them as they are and never turns them into its own
+  problem, warning and note. A change to the rules is made in openstage-core.
 - C6, the translation layer, is item 6. It is still inside Author and OpenExplainer, not yet in the core.
 - A format or rule change that another tool shares is made in openstage-core first.
 

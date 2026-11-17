@@ -268,6 +268,30 @@ select {
 }
 .play-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-3); margin: var(--os-space-3) 0; }
 
+/* Accessibility: A11Y-1's statuses, always a word and a symbol; the colour only repeats them. */
+.a11y-part + .a11y-part { margin-top: var(--os-space-5); padding-top: var(--os-space-4); border-top: 1px solid var(--os-divider); }
+.a11y-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--os-space-2);
+  border-radius: 999px;
+  font-size: var(--os-small-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.a11y-status--fail { background: var(--os-danger-tint); color: var(--os-danger); }
+.a11y-status--needs-review { background: var(--os-warning-tint); color: var(--os-warning); }
+.a11y-status--pass { background: var(--os-success-tint); color: var(--os-success); }
+.a11y-status--not-tested, .a11y-status--not-applicable { background: var(--os-subtle); color: var(--os-muted); border: 1px solid var(--os-divider); }
+.a11y-finding--fail { border-left-color: var(--os-danger); }
+.a11y-finding--needs-review { border-left-color: var(--os-warning); }
+.a11y-finding h4 { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-2); }
+.a11y-places { margin: var(--os-space-1) 0 0; padding-left: var(--os-space-5); }
+.a11y-places li { margin: 2px 0; overflow-wrap: anywhere; }
+.a11y-places .where { font-size: var(--os-small-size); color: var(--os-muted); }
+.a11y-part > h4 { margin-top: var(--os-space-4); }
+
 /* Changing the package. */
 .changes-view { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--os-space-4); }
 .options { border: 1px solid var(--os-divider); border-radius: var(--os-radius); padding: var(--os-space-2) var(--os-space-4); margin: 0 0 var(--os-space-3); }
@@ -361,7 +385,7 @@ main:has(.player) { padding-bottom: 36px; }
 }
 
 @media (forced-colors: active) {
-  .verdict, .badge, .finding, .tag { border: 1px solid CanvasText; }
+  .verdict, .badge, .finding, .tag, .a11y-status { border: 1px solid CanvasText; }
   .player-stage, .player-summary, .player-logbox { border-color: CanvasText; }
   .log-entry--refused { border-left-color: CanvasText; }
 }

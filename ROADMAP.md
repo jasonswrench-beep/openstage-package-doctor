@@ -9,9 +9,19 @@ build-session work, M is one to two weeks.
 | 2 | A will-it-run check: manifest validity, missing files, broken links | The most common reason an inherited package fails in an LMS | S | **Done in 0.1.0** |
 | 3 | A local test player with a tracking log | Shows what the LMS will receive before anything is uploaded | S | **Done in 0.2.0** |
 | 4 | Compress media and replace any file inside the zip | LMS upload limits bite, and fixing one video should not need the source | M | **Done in 0.3.0** |
-| 5 | Accessibility preflight on C2 | The same report Author and Scroll give, for packages made anywhere | S | Next. `openstage-a11y` (tag `a11y-v0.1.0`) is published |
-| 6 | Extract all text to XLIFF or .docx and put translations back (C6) | Translate a package with no source file | M | Waits on C6 moving into openstage-core, or borrows Author's |
+| 5 | Accessibility preflight on C2 | The same report Author and Scroll give, for packages made anywhere | S | **Done in 0.4.0** |
+| 6 | Extract all text to XLIFF or .docx and put translations back (C6) | Translate a package with no source file | M | Next. Waits on C6 moving into openstage-core, or borrows Author's |
 | 7 | Wrap a PDF, a video or an HTML folder as a package | Small, and often what instructors actually need | S | Author's manifest writers (`player/src/*-manifest.ts`) are the start |
+
+## Left from item 5
+
+- PDFs in a package are counted, not checked: the engine does not read PDFs yet (A11Y-1 section 6.6).
+- The command line (`core/src/cli.ts`) has no accessibility check; it runs in the program, where the Rust engine is.
+  The browser preview says so too.
+- The check of a page as the learner sees it is one moment of one page. It does not walk through every slide, and a
+  style a script sets through the style sheet objects (rather than on an element) is not seen.
+- The engine's findings on pages are only as good as its reading of style sheets: it lists what it could not follow
+  (some selectors, @media rules) in each report.
 
 ## Left from item 4
 

@@ -5,7 +5,7 @@ package from a publisher or a colleague and needs to know what is inside it befo
 
 Part of the OpenStage suite. Free and open source under the Apache License 2.0.
 
-## What it does today (0.3.0)
+## What it does today (0.4.0)
 
 - **Opens** SCORM 1.2, SCORM 2004 (2nd, 3rd and 4th editions), xAPI (`tincan.xml`) and cmi5 packages from a `.zip`,
   and shows:
@@ -23,6 +23,12 @@ Part of the OpenStage suite. Free and open source under the Apache License 2.0.
     Windows but break on most LMS servers
 
   Each finding says what is wrong, where, and what to do about it. [docs/checks.md](docs/checks.md) lists every check.
+- **Checks accessibility** with the suite's own rules (A11Y-1, which follow WCAG 2.1 AA), the same rules OpenStage
+  Author and the other tools use: every page in the package with its style sheets, and each Word, PowerPoint and
+  captions file. Each finding is a word and a symbol (Fail, Needs review), where it is and what to do, with the
+  checks only a person can make and what the check could not do. Most authoring tools build their pages with scripts,
+  so the test player also checks a page **as the learner sees it** (Check this page's accessibility). The findings
+  warn and never block.
 - It tells a SCORM course from other files called `imsmanifest.xml`, such as a question library exported from an LMS.
 - **Plays it** in a test player, the way an LMS would, with a log beside it of everything the course tells the LMS:
   - for SCORM 1.2 and 2004, every call to the LMS's API, what the LMS answered, and why it refused a value (a status
@@ -48,8 +54,7 @@ Part of the OpenStage suite. Free and open source under the Apache License 2.0.
 
 Nothing is uploaded and nothing is changed: the package is only read, on your computer. No AI is involved.
 
-What's next is in [ROADMAP.md](ROADMAP.md): an accessibility preflight, translation, and wrapping a PDF or video as a
-package.
+What's next is in [ROADMAP.md](ROADMAP.md): translation, and wrapping a PDF or video as a package.
 
 ## Using it
 
@@ -74,7 +79,8 @@ Needs Node.js 22.18 or later. Building the program needs Rust as well.
 - `core/` (TypeScript, no dependencies but fflate): reading zips and manifests, every check, and the test player's
   stand-in LMS and LRS (`core/src/play/`), writing a new zip (`core/src/write.ts`) and choosing what to make smaller
   (`core/src/media/`). The window, the command line and the tests all use it.
-- `app/`: the window, a Tauri program (a Rust shell around a web page), with the suite's look. The test player's
+- `app/`: the window, a Tauri program (a Rust shell around a web page), with the suite's look. The Rust side runs the
+  suite's accessibility engine (`openstage-a11y`, from openstage-core) on the files the page sends it. The test player's
   service worker serves the course's pages from the open zip on the window's own site, so a SCORM course finds the
   LMS's API there, as it would in an LMS. Pictures and video are made smaller with the window's own codecs
   (WebCodecs, which on Windows use Windows' H.264 encoder): no separate program, and nothing uploaded.

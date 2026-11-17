@@ -28,6 +28,11 @@ test("the product colours pass their contrast", () => {
     [value("pd-action-text"), value("pd-tint"), 4.5], // a tag's words on its tint
     [value("pd-on-shell"), value("os-shell"), 4.5], // the name on the navy bar
     [value("pd-logo"), value("os-shell"), 3],
+    // The accessibility statuses' words on their tints (each is also a word and a symbol).
+    [value("os-danger"), value("os-danger-tint"), 4.5],
+    [value("os-warning"), value("os-warning-tint"), 4.5],
+    [value("os-success"), value("os-success-tint"), 4.5],
+    [value("os-muted"), value("os-subtle"), 4.5],
   ];
   for (const [fg, bg, min] of pairs) assert.ok(ratio(fg, bg) >= min, `${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}:1, under ${min}:1`);
 });

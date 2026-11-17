@@ -10,10 +10,14 @@ import { SEVERITY_ORDER, SEVERITY_WORDS } from "../../core/src/findings.ts";
 import type { Mode } from "../../core/src/play/scorm-common.ts";
 import { STANDARD_WORDS, type PlaySession } from "../../core/src/play/session.ts";
 import { badge, copyText, findingItem, h } from "./dom.ts";
+import { a11yView, canCheck, checkSnapshot, snapshotPages } from "./a11y.ts";
+import type { ZipArchive } from "../../core/src/zip.ts";
 import { icon } from "./icons.ts";
 
 export interface PlayerHost {
   main: HTMLElement;
+  /** The open zip, for checking the page now showing against the package's style sheets. */
+  archive?: ZipArchive;
   say(message: string): void;
   /** Called when the person goes back to the report. */
   back(): void;
@@ -89,6 +93,8 @@ export async function openPlayer(session: PlaySession, host: PlayerHost, first =
   const relaunchButton = h("button", { type: "button", class: "button" }, "Leave and relaunch");
   const resetButton = h("button", { type: "button", class: "button" }, "Empty the learner's record");
   const copyButton = h("button", { type: "button", class: "button" }, icon("copy"), "Copy log");
+  const checkButton = canCheck() && host.archive ? h("button", { type: "button", class: "button" }, "Check this page's accessibility") : null;
+  const pageCheck = h("div", {});
   const partSelect = h("select", { id: "player-part" }, ...session.playable.map((p) => h("option", { value: String(p.index) }, `${p.index + 1}. ${p.title}${p.tracked ? "" : " (asset)"}`)));
   partSelect.value = String(part);
   const modeSelect = h(
@@ -116,6 +122,7 @@ export async function openPlayer(session: PlaySession, host: PlayerHost, first =
     holds,
     h("h2", {}, "What the test player found"),
     found,
+    pageCheck,
     statements,
   );
   const logBox = h("div", { class: "player-logbox", role: "region", "aria-labelledby": "player-log-h", tabindex: "0" }, h("h2", { id: "player-log-h" }, "Log"), logNote, log);
@@ -138,6 +145,7 @@ export async function openPlayer(session: PlaySession, host: PlayerHost, first =
           h("label", { class: "field" }, "Launch ", modeSelect),
           relaunchButton,
           resetButton,
+          checkButton,
           copyButton,
         ),
       ),
@@ -282,6 +290,32 @@ export async function openPlayer(session: PlaySession, host: PlayerHost, first =
     session.resetLearner();
     await start(part);
     host.say("The learner's record is empty, and the course was opened again as a first launch.");
+  });
+  checkButton?.addEventListener("click", async () => {
+    const pages = snapshotPages(frame, session.base);
+    if (!pages.length) {
+      host.say("There is no page from the package showing to check.");
+      return;
+    }
+    checkButton.disabled = true;
+    host.say("Checking the page as it is now...");
+    try {
+      const check = await checkSnapshot(`${session.playable[part]!.title}, as it is now`, pages, host.archive!);
+      const time = new Date().toLocaleTimeString();
+      pageCheck.replaceChildren(
+        h("h2", {}, "Accessibility of this page"),
+        h("p", { class: "muted" }, `The page as it was at ${time}${pages.length > 1 ? `, with ${pages.length - 1} frame${pages.length === 2 ? "" : "s"} inside it` : ""}, checked as the learner sees it rather than as it is stored. It is one moment: check again after moving to another part or opening a question.`),
+        ...a11yView(check).slice(1),
+      );
+      pageCheck.scrollIntoView({ block: "start" });
+      const fails = (check.pages?.summary.fail ?? 0);
+      const review = (check.pages?.summary.needsReview ?? 0);
+      host.say(`Checked the page as it is now: ${fails} failure${fails === 1 ? "" : "s"}, ${review} to review. The results are under What the test player found.`);
+    } catch (e) {
+      pageCheck.replaceChildren(h("p", {}, `The page could not be checked: ${e instanceof Error ? e.message : String(e)}`));
+    } finally {
+      checkButton.disabled = false;
+    }
   });
   copyButton.addEventListener("click", async () => {
     await copyText(session.logText());

@@ -23,6 +23,9 @@ The automated tests (`RUN TESTS.bat`) build every package they check. These need
 - [ ] Make it smaller on a long video (20 minutes or more): how long it takes, memory use, and whether picture and
       sound stay together to the end.
 - [ ] Save as a new package with a screen reader: the Save As box, and the status line saying where it was saved.
+- [ ] The accessibility check on courses from other programs, both as stored and as the learner sees it: are the
+      failures real, and is anything an accessibility checker (or a person) finds missing?
+- [ ] The accessibility section with a screen reader: one heading per rule, each status read as a word.
 - [ ] The test player with a screen reader (NVDA): the status line says when the course starts, finishes and is
       refused; the summary and the log can be reached and scrolled by keyboard.
 
@@ -36,6 +39,13 @@ Read-only, the reports checked by eye:
   `favicon.png`, all real; 0.07 seconds.
 - A Brightspace question library export: recognised as a question library, not a SCORM course.
 - A 96 MB program archive with 517 backslashed names and a manifest deep in a folder: both reported; 0.1 seconds.
+
+The accessibility check, in the built program:
+
+- OpenStage Author's SCORM 2004 lesson: as stored, one failure (no main element) and the Word document passes; as the
+  learner sees it in the test player, no failures, because the player builds the main element as the page opens.
+- The third-party SCORM 1.2 course: 11 pages, 22 failures and 53 to review as stored, among them pictures with no
+  description and pages that do not say their language.
 
 Change the package, in the built program and in the browser preview:
 

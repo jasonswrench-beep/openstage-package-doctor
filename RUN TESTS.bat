@@ -16,7 +16,17 @@ call npm test
 set APP=%errorlevel%
 call npx tsc --noEmit
 popd
+set RUST=0
+where cargo >nul 2>nul
+if not errorlevel 1 (
+  pushd app\src-tauri
+  cargo test --release
+  if errorlevel 1 set RUST=1
+  popd
+) else (
+  echo Rust is not installed, so the accessibility check's own tests were not run.
+)
 
 echo.
-if "%CORE%%APP%"=="00" (echo All tests passed.) else (echo Some tests failed. Scroll up to see which.)
+if "%CORE%%APP%%RUST%"=="000" (echo All tests passed.) else (echo Some tests failed. Scroll up to see which.)
 pause
