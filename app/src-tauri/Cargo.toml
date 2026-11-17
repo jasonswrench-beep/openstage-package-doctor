@@ -5,7 +5,7 @@ description = "OpenStage Package Doctor: opens a course package without its sour
 authors = ["Jason S. Wrench"]
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/jasonswrench-beep/openstage-pd"
+repository = "https://github.com/jasonswrench-beep/openstage-package-doctor"
 
 [lib]
 name = "openstage_package_doctor_lib"

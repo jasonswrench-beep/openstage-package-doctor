@@ -79,5 +79,6 @@ Anything not on `ROADMAP.md` is agreed with the user first.
 
 Hub's catalog (`brands/openstage/apps.json`) lists this program as repository
 `jasonswrench-beep/openstage-package-doctor`, program file `openstage-package-doctor.exe`, the NSIS quiet switch
-`/P`, signer "Jason Wrench". The program file and switch match `app/src-tauri/tauri.conf.json`. This repository is
-`openstage-pd`, so the name in the catalog and the repository's name must be brought together before Hub can list it.
+`/P`, signer "Jason Wrench". All of them match: the repository was renamed from `openstage-pd` to
+`openstage-package-doctor` on 2026-11-17, and the program file and switch are set in `app/src-tauri/tauri.conf.json`.
+Hub can list it once there is a signed release on GitHub with the installer (`npx tauri build` in `app/`).
