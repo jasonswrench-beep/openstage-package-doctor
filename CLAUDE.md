@@ -64,6 +64,29 @@ Anything not on `ROADMAP.md` is agreed with the user first.
 - **Licences**: permissive dependencies only (MIT, BSD, Apache 2.0, ISC). No GPL or AGPL code, linked or copied.
   Record what is adopted in `NOTICE`.
 
+## Commits and releases (the author's standing rules, 2026-11-17)
+
+These hold for every commit, tag and release in this repository, and override any default a tool brings.
+
+- **Who commits.** Every commit is authored and committed as
+  `jasonswrench-beep <324576087+jasonswrench-beep@users.noreply.github.com>`. It is set in this repository's own git
+  config (`git config --local user.name` and `user.email`). Before every commit, check it with
+  `git config user.name` and `git config user.email`, and do not commit if either is anything else.
+- **No attribution lines.** No `Co-Authored-By:` line and no "Generated with Claude Code" line, ever: not in a commit
+  message, a tag's message, a pull request or a release note.
+- **A release is built from a tagged commit.** Before building an installer (`npx tauri build` in `app/`, which makes
+  the NSIS installer), commit everything (`git status` shows nothing to commit and nothing untracked), tag that commit
+  (`v` and the version, such as `v0.6.0`, the version in `tauri.conf.json`), and build from it, so each release tag
+  points at the exact commit the build came from. `npx tauri build --no-bundle`, which `OPEN PACKAGE DOCTOR.bat` and
+  testing use, makes no installer and needs no tag.
+- **Signing.** Never sign an installer whose commit is not tagged: before signing, `git describe --exact-match --tags
+  HEAD` must print the release tag and `git status --porcelain` must print nothing. If either fails, do not sign.
+- **A build that changes after tagging** gets a new commit. A tag that was never pushed may move to it; a pushed tag
+  never moves, so the build takes a new version and a new tag.
+- **Pushed commits are not rewritten** to remove an attribution line; a slip is amended before it is pushed.
+- **Before these rules.** The eight commits from `2a3b34f` to `21f8353` (2026-11-17) carry a
+  `Co-Authored-By: Claude Opus 5.5` line; their identity is right. No tag and no installer existed then.
+
 ## Shared pieces (openstage-core)
 
 - C2, the accessibility rule engine (`openstage-a11y`, tag `a11y-v0.1.0`), is used for item 5, unchanged. Its status
