@@ -3,6 +3,7 @@ node_modules/
 dist/
 target/
 app/web/main.js
+app/web/player-sw.js
 app/web/style.css
 app/src-tauri/gen/
 

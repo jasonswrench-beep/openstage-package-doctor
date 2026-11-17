@@ -1,7 +1,7 @@
 // Reads cmi5.xml (the cmi5 course structure) and tincan.xml (the xAPI package file most LMSs that take xAPI packages read).
 
 import { finding, type Finding } from "./findings.ts";
-import type { LaunchPoint, OutlineNode, TrackingSetting } from "./model.ts";
+import type { LaunchPoint, OutlineNode, StartSettings, TrackingSetting } from "./model.ts";
 import { FileIndex, folderOf, isExternal, resolveIn, splitReference } from "./paths.ts";
 import { allText, attr, kid, kids, type XmlElement } from "./xml.ts";
 
@@ -87,7 +87,12 @@ export function readCmi5(root: XmlElement, manifestPath: string, files: FileInde
     const url = allText(urlEl);
     if (!url) findings.push(finding("cmi5-no-url", `"${title}" has no <url>.`, { ...where, line: au.line }));
     else {
-      const point: LaunchPoint = { title, from: `au ${id}`, href: url, tracked: true };
+      const start: StartSettings = { id };
+      if (params) start.launchData = params;
+      if (mastery !== undefined && Number.isFinite(Number(mastery))) start.masteryScore = Number(mastery);
+      if (moveOn !== undefined) start.moveOn = moveOn;
+      if (method !== undefined) start.launchMethod = method;
+      const point: LaunchPoint = { title, from: `au ${id}`, href: url, tracked: true, start };
       if (isExternal(url)) findings.push(finding("cmi5-remote-launch", `"${title}" opens ${url}.`, { ...where, line: urlEl?.line }));
       else {
         const target = resolveIn(folder, splitReference(url).file);
@@ -148,7 +153,7 @@ export function readTincan(root: XmlElement, manifestPath: string, files: FileIn
       tracking.push({ scope: name, name: "Activity id", value: id, meaning: "The learning record store files this course's records under this id.", source: "activity id" });
       const type = attr(a, "type");
       if (type) tracking.push({ scope: name, name: "Activity type", value: type, meaning: "The kind of activity the course reports itself as.", source: "activity type" });
-      const point: LaunchPoint = { title: name, from: `activity ${id}`, href: launch, tracked: true };
+      const point: LaunchPoint = { title: name, from: `activity ${id}`, href: launch, tracked: true, start: { id } };
       if (isExternal(launch)) findings.push(finding("xapi-remote-launch", `"${name}" opens ${launch}.`, { ...where, line: launchEl?.line }));
       else {
         const target = resolveIn(folder, splitReference(launch).file);

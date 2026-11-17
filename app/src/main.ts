@@ -3,25 +3,16 @@
 // findings under h3 and h4 so a screen reader can move by heading; states always in words; focus goes to the report's
 // heading when a package opens, and the status line says the verdict once.
 
-import { counts, formatBytes, openPackage, verdict } from "../../core/src/open.ts";
+import { counts, formatBytes, openPackageSession, verdict } from "../../core/src/open.ts";
 import { reportText } from "../../core/src/report.ts";
-import { SEVERITY_ORDER, SEVERITY_WORDS, type Finding, type Severity } from "../../core/src/findings.ts";
+import { SEVERITY_ORDER, SEVERITY_WORDS, type Severity } from "../../core/src/findings.ts";
 import type { OpenedPackage, OutlineNode } from "../../core/src/model.ts";
-import { icon, type IconName } from "./icons.ts";
+import { PlaySession, playables, STANDARD_WORDS } from "../../core/src/play/session.ts";
+import type { ZipArchive } from "../../core/src/zip.ts";
+import { badge, copyText, findingItem, h, type Child } from "./dom.ts";
+import { icon } from "./icons.ts";
+import { openPlayer } from "./player.ts";
 import { buildTree, type Folder } from "./tree.ts";
-
-type Child = Node | string | null | undefined | false;
-
-function h<K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, string | boolean> = {}, ...children: Child[]): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(props)) {
-    if (v === false) continue;
-    if (k === "class") el.className = String(v);
-    else el.setAttribute(k, v === true ? "" : v);
-  }
-  for (const c of children) if (c !== null && c !== undefined && c !== false) el.append(c);
-  return el;
-}
 
 const main = document.getElementById("main")!;
 const status = document.getElementById("status")!;
@@ -35,6 +26,9 @@ openButton.append(icon("open"), "Open package...");
 copyButton.append(icon("copy"), "Copy report");
 
 let current: OpenedPackage | undefined;
+/** The open zip, for the test player, and the player's sitting once it has been opened. */
+let archive: ZipArchive | undefined;
+let playSession: PlaySession | undefined;
 
 function say(message: string): void {
   // Emptied first, so the same words said twice are still read out.
@@ -42,14 +36,10 @@ function say(message: string): void {
   window.setTimeout(() => (status.textContent = message), 50);
 }
 
-const BADGE_ICON: Record<Severity, IconName> = { problem: "problem", warning: "warning", note: "note" };
-
-function badge(severity: Severity): HTMLElement {
-  return h("span", { class: `badge badge--${severity}` }, icon(BADGE_ICON[severity]), SEVERITY_WORDS[severity]);
-}
-
 function welcome(): void {
   current = undefined;
+  archive = undefined;
+  playSession = undefined;
   shellDoc.textContent = "";
   copyButton.disabled = true;
   const button = h("button", { type: "button", class: "button button--primary button--large" }, icon("open"), "Open a package...");
@@ -72,8 +62,10 @@ async function openFile(file: File): Promise<void> {
   main.setAttribute("aria-busy", "true");
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const report = openPackage(bytes, file.name);
-    show(report);
+    const opened = openPackageSession(bytes, file.name);
+    archive = opened.archive;
+    playSession = undefined;
+    show(opened.report);
   } catch (e) {
     main.replaceChildren(
       h("section", { class: "welcome" }, h("h1", { tabindex: "-1", id: "report-title" }, `${file.name} could not be opened`), h("p", {}, e instanceof Error ? e.message : String(e))),
@@ -85,7 +77,7 @@ async function openFile(file: File): Promise<void> {
   }
 }
 
-function show(r: OpenedPackage): void {
+function show(r: OpenedPackage, focusSection?: string): void {
   current = r;
   copyButton.disabled = false;
   shellDoc.textContent = r.fileName;
@@ -102,7 +94,7 @@ function show(r: OpenedPackage): void {
   const groups = SEVERITY_ORDER.filter((s) => r.findings.some((f) => f.severity === s)).map((s) => {
     const list = r.findings.filter((f) => f.severity === s);
     const heading = h("h3", {}, badge(s), ` ${SEVERITY_WORDS[s]}s (${list.length})`);
-    const items = h("ul", { class: "findings", role: "list" }, ...list.map(findingItem));
+    const items = h("ul", { class: "findings", role: "list" }, ...list.map((f) => findingItem(f)));
     if (s === "note") return h("details", { class: "group" }, h("summary", {}, heading), items);
     return h("div", { class: "group" }, heading, items);
   });
@@ -136,6 +128,27 @@ function show(r: OpenedPackage): void {
         )
       : null,
   );
+
+  // Trying it in the test player.
+  const play = playables(r);
+  if (play.standard && archive) {
+    const button = h("button", { type: "button", class: "button button--primary" }, icon("play"), "Play it in the test player");
+    const choose = play.playable.length > 1 ? h("select", { id: "play-part" }, ...play.playable.map((p) => h("option", { value: String(p.index) }, `${p.index + 1}. ${p.title}${p.tracked ? "" : " (asset)"}`))) : null;
+    button.addEventListener("click", () => {
+      playSession ??= new PlaySession(r, archive!, location.origin);
+      void openPlayer(playSession, { main, say, back: () => show(r, "play") }, choose ? Number(choose.value) : 0);
+    });
+    const earlier = playSession?.findings() ?? [];
+    const runs = playSession?.log.filter((e) => e.kind === "launch").length ?? 0;
+    section(
+      "play",
+      "Try it",
+      h("p", {}, `Plays the course here as a ${STANDARD_WORDS[play.standard]} LMS would, and logs everything it tells the LMS: what an LMS would record, and what it would refuse. Nothing is uploaded.`),
+      play.playable.length === 0 ? h("p", {}, "There is nothing to play: no start page is in the package.") : h("div", { class: "play-start" }, choose ? h("label", { class: "field" }, "Part ", choose) : null, button),
+      play.skipped.length ? h("ul", { class: "plain" }, ...play.skipped.map((s) => h("li", {}, h("strong", {}, s.title), ` cannot be played here. ${s.why}`))) : null,
+      runs ? h("p", { class: "muted" }, `So far the test player has launched it ${runs === 1 ? "once" : `${runs} times`} and found ${earlier.length === 0 ? "nothing" : earlier.length === 1 ? "one thing" : `${earlier.length} things`} to look at. They are listed beside the course in the player.`) : null,
+    );
+  }
 
   // Tracking settings.
   section(
@@ -194,20 +207,17 @@ function show(r: OpenedPackage): void {
   );
   main.scrollTop = 0;
   window.scrollTo(0, 0);
+  if (focusSection) {
+    // Back from the test player: to where the person left the report.
+    const heading = document.getElementById(`${focusSection}-h`);
+    heading?.setAttribute("tabindex", "-1");
+    heading?.scrollIntoView();
+    heading?.focus();
+    say("Back to the report.");
+    return;
+  }
   title.focus();
   say(`Opened ${r.fileName}. ${verdict(r)}`);
-}
-
-function findingItem(f: Finding): HTMLElement {
-  return h(
-    "li",
-    { class: `finding finding--${f.severity}` },
-    h("h4", {}, f.title),
-    h("p", {}, f.detail),
-    f.file ? h("p", { class: "where" }, "In ", h("code", {}, f.file), f.line ? `, line ${f.line}` : "") : null,
-    h("p", { class: "fix" }, h("strong", {}, "What to do: "), f.fix),
-    h("p", { class: "check-id" }, `Check: ${f.id}`),
-  );
 }
 
 function outlineList(nodes: OutlineNode[]): HTMLElement {
@@ -270,17 +280,7 @@ fileInput.addEventListener("change", () => {
 });
 copyButton.addEventListener("click", async () => {
   if (!current) return;
-  const text = reportText(current);
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const area = h("textarea", { class: "visually-hidden", "aria-hidden": "true" });
-    area.value = text;
-    document.body.append(area);
-    area.select();
-    document.execCommand("copy");
-    area.remove();
-  }
+  await copyText(reportText(current));
   say("The report is copied. Paste it into an email or a document.");
 });
 document.addEventListener("keydown", (e) => {

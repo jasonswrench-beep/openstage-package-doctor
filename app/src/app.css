@@ -254,6 +254,85 @@ section > .tree { padding-left: 0; }
   min-height: 26px;
 }
 
+/* Choosing in the report and the player. */
+.field { display: inline-flex; align-items: center; gap: var(--os-space-2); }
+select {
+  height: var(--os-control-height);
+  padding: 0 var(--os-space-2);
+  border: 1px solid var(--os-control-edge);
+  border-radius: var(--os-radius-sm);
+  background: var(--os-surface);
+  color: var(--os-text);
+  font: inherit;
+  max-width: 28em;
+}
+.play-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-3); margin: var(--os-space-3) 0; }
+
+/* The test player: the course on the left, what the LMS saw on the right. It fills the window below the bar. */
+main:has(.player) { padding-bottom: 36px; }
+.player {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--os-space-3);
+  height: calc(100vh - var(--os-shell-height) - 24px - 36px);
+  min-height: 480px;
+}
+.player-head { display: grid; gap: var(--os-space-1); }
+.player-head > p { margin: 0; }
+.player-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-2) var(--os-space-3); margin-top: var(--os-space-2); }
+.player-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: var(--os-space-3); min-height: 0; }
+.player-stage {
+  position: relative;
+  min-height: 0;
+  background: #ffffff;
+  border: 1px solid var(--os-divider);
+  border-radius: var(--os-radius);
+  overflow: hidden;
+}
+.player-frame { display: block; width: 100%; height: 100%; border: 0; background: #ffffff; }
+.player-closed { display: grid; place-content: center; justify-items: center; gap: var(--os-space-3); height: 100%; padding: var(--os-space-5); text-align: center; }
+.player-closed p { margin: 0; max-width: 32em; }
+.player-panel { display: flex; flex-direction: column; gap: var(--os-space-3); min-height: 0; }
+.player-summary, .player-logbox {
+  min-height: 0;
+  overflow: auto;
+  background: var(--os-surface);
+  border: 1px solid var(--os-divider);
+  border-radius: var(--os-radius);
+  padding: var(--os-space-3) var(--os-space-4);
+}
+.player-summary { flex: 0 1 auto; max-height: 55%; }
+.player-logbox { flex: 1 1 0; }
+.player-panel h2 { font-size: var(--os-heading-size); margin: var(--os-space-4) 0 var(--os-space-2); }
+.player-summary > h2:first-child, .player-logbox > h2:first-child { margin-top: 0; }
+.player-panel .finding { padding: var(--os-space-2) var(--os-space-3); }
+.player-panel table { font-size: var(--os-small-size); }
+.player-panel th, .player-panel td { padding: var(--os-space-1) var(--os-space-2); overflow-wrap: anywhere; }
+.facts--tight { gap: 2px var(--os-space-3); font-size: var(--os-small-size); }
+.player-log { list-style: none; margin: 0; padding: 0; font-size: var(--os-small-size); }
+.log-entry {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  gap: 0 var(--os-space-2);
+  padding: 3px var(--os-space-2);
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--os-divider);
+}
+.log-entry code { font-size: 1em; }
+.log-time { color: var(--os-muted); font-variant-numeric: tabular-nums; }
+.log-why { grid-column: 2; overflow-wrap: anywhere; }
+.log-entry--launch, .log-entry--lms { background: var(--os-subtle); font-weight: 600; }
+.log-entry--refused { border-left-color: var(--os-danger); background: var(--os-danger-tint); }
+@media (max-width: 960px) {
+  .player { height: auto; }
+  .player-body { grid-template-columns: 1fr; }
+  .player-stage { height: 70vh; }
+  .player-summary { max-height: none; }
+  .player-logbox { max-height: 60vh; flex: none; }
+}
+
 @media (forced-colors: active) {
   .verdict, .badge, .finding, .tag { border: 1px solid CanvasText; }
+  .player-stage, .player-summary, .player-logbox { border-color: CanvasText; }
+  .log-entry--refused { border-left-color: CanvasText; }
 }

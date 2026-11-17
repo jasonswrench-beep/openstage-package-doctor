@@ -1,7 +1,7 @@
 {
   "name": "openstage-package-doctor-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "The OpenStage Package Doctor window: a Tauri shell around a web page that uses ../core.",
   "license": "Apache-2.0",

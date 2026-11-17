@@ -213,7 +213,7 @@ export function openPackageSession(bytes: Uint8Array, fileName: string): Package
 
   const tooBig = report.files.filter((f) => (PAGE_EXTENSIONS.test(f.path) || STYLE_EXTENSIONS.test(f.path)) && f.size > LINK_SCAN_LIMIT);
   if (tooBig.length) report.limits.push(`Pages or style sheets over ${formatBytes(LINK_SCAN_LIMIT)} were not read for links: ${list(tooBig.map((f) => f.path))}.`);
-  report.limits.push("Links that a course's scripts build while it runs are not checked; running the course is the only way to find those.");
+  report.limits.push("Links that a course's scripts build while it runs are not checked here; playing the course in the test player finds the ones its scripts ask for.");
   report.limits.push("Whether an LMS accepts the package's size is not checked here, because each LMS sets its own limit.");
   report.limits.push("This check reads the package. The final test is importing it into your LMS and launching it there.");
 

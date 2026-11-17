@@ -22,6 +22,29 @@ export interface LaunchPoint {
   file?: string;
   /** For SCORM: whether the LMS tracks it (sco) or only opens it (asset). */
   tracked?: boolean;
+  /** What the LMS hands the course when it starts this point, as the manifest gives it. The test player uses these. */
+  start?: StartSettings;
+}
+
+/** The manifest's start-up settings for one launch point, as the LMS reads them. */
+export interface StartSettings {
+  /** The id the LMS knows this part by: a SCORM item's identifier, a cmi5 AU's id, an xAPI activity's id. */
+  id: string;
+  /** cmi.launch_data (adlcp:datafromlms, adlcp:dataFromLMS) or cmi5's launchParameters. */
+  launchData?: string;
+  /** SCORM 1.2 adlcp:masteryscore (0 to 100) or cmi5's masteryScore (0 to 1). */
+  masteryScore?: number;
+  /** SCORM 2004: the primary objective's minNormalizedMeasure, when satisfiedByMeasure is true. */
+  scaledPassingScore?: number;
+  /** SCORM 2004: adlcp:completionThreshold, when completedByMeasure is not false. */
+  completionThreshold?: number;
+  /** SCORM 1.2 adlcp:maxtimeallowed, or SCORM 2004's attemptAbsoluteDurationLimit. */
+  maxTimeAllowed?: string;
+  /** SCORM's time limit action, as written (exit,message and so on). */
+  timeLimitAction?: string;
+  /** cmi5's moveOn and launchMethod. */
+  moveOn?: string;
+  launchMethod?: string;
 }
 
 /** One tracking setting, in words. */

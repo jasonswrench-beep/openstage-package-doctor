@@ -10,7 +10,7 @@ test("a sound SCORM 1.2 package: kind, title, start page, tracking, no problems 
   assert.equal(r.title, "Test course");
   assert.equal(r.identifier, "M1");
   assert.equal(r.manifest, "imsmanifest.xml");
-  assert.deepEqual(r.launches, [{ title: "Lesson one", from: "item I1", href: "index.html", file: "index.html", tracked: true }]);
+  assert.deepEqual(r.launches, [{ title: "Lesson one", from: "item I1", href: "index.html", file: "index.html", tracked: true, start: { id: "I1", masteryScore: 80 } }]);
   assert.deepEqual(r.tracking.map((t) => [t.scope, t.name, t.value]), [["Lesson one", "Passing score", "80"]]);
   assert.deepEqual(ids(r, "problem"), []);
   assert.deepEqual(ids(r, "warning"), []);

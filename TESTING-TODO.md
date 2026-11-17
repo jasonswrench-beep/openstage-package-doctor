@@ -14,6 +14,12 @@ The automated tests (`RUN TESTS.bat`) build every package they check. These need
 - [ ] Windows high-contrast mode: every state still shows.
 - [ ] The installer (`npx tauri build` in `app/`) on a second computer, and its `/P` quiet switch from OpenStage Hub.
 - [ ] A package of 1 GB or more: how long it takes to open, and how much memory it uses.
+- [ ] The test player with courses from other programs (Storyline, Rise, Captivate, iSpring, Lectora) in all four
+      formats: does each one start, track and resume as it does in a real LMS, and is every refusal one a real LMS
+      makes too? Note any the player refuses that LMSs accept, and decide whether the stand-in is too strict.
+- [ ] The test player with a course that plays video: seeking backward and forward, and memory use while it plays.
+- [ ] The test player with a screen reader (NVDA): the status line says when the course starts, finishes and is
+      refused; the summary and the log can be reached and scrolled by keyboard.
 
 ## Already tried on this computer (November 17, 2026)
 
@@ -25,3 +31,11 @@ Read-only, the reports checked by eye:
   `favicon.png`, all real; 0.07 seconds.
 - A Brightspace question library export: recognised as a question library, not a SCORM course.
 - A 96 MB program archive with 517 backslashed names and a manifest deep in a folder: both reported; 0.1 seconds.
+
+The test player, in the built program and in the browser preview:
+
+- OpenStage Author's test lesson in SCORM 2004, cmi5 and xAPI: plays, tracks, resumes after Leave and relaunch, and
+  nothing is refused. (A cmi5 lesson's last statement arriving just after a relaunch is accepted, as an LMS would.)
+- The third-party SCORM 1.2 course: plays. Six files its scripts ask for are not in the package (a video, a slide
+  deck, audio, two PDFs and a JSON file), a value outside SCORM 1.2 (`lrn.item.lastaccess`) is refused, and it loads
+  content from YouTube and, over http, from h5p.org.

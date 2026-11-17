@@ -12,8 +12,14 @@ Anything not on `ROADMAP.md` is agreed with the user first.
 - `core/`: TypeScript, run directly by Node (22.18 or later, type stripping), bundled into the window by esbuild.
   Reading the zip (`zip.ts`), XML (`xml.ts`), the three manifests (`scorm.ts`, `cmi5.ts`), links (`links.ts`), putting
   it together (`open.ts`), the text report (`report.ts`) and the command line (`cli.ts`). Every finding's words are in
-  `findings.ts`.
-- `app/`: the Tauri window. `src/main.ts` draws the report; the Rust side (`src-tauri/`) is only the window.
+  `findings.ts`. The test player's parts are in `core/src/play/`: the stand-in SCORM 1.2 and 2004 LMSs
+  (`scorm12.ts`, `scorm2004.ts`), the stand-in LRS (`lrs.ts`), cmi5's launch and rules (`cmi5.ts`), and the sitting
+  that serves the files and keeps the log (`session.ts`). They are as strict as the standards, so a value one LMS
+  accepts and another refuses shows as refused, with the reason.
+- `app/`: the Tauri window. `src/main.ts` draws the report and `src/player.ts` the test player; the Rust side
+  (`src-tauri/`) is only the window. `src/player-sw.ts` is a service worker (scope `/play/`) that hands each request a
+  course makes to the window over a BroadcastChannel; the window answers from the zip. This keeps the course on the
+  window's own site, which SCORM needs (the course looks for `window.API` in the windows above it), with no Rust.
 - `branding/OpenStage_Package_Doctor.svg` is the program's icon (the author's, November 17, 2026). `app/web/logo.svg`
   is a copy of it, and `app/src-tauri/icons/` is made from it with `npx tauri icon` (then delete the android and ios
   folders it adds).

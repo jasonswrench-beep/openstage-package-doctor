@@ -14,6 +14,11 @@ A broken link (`link-broken`) or a link that differs in capitals only (`link-cas
 the course needs to run (a script, style sheet, page or data file) and a warning when it is a picture, sound, video,
 font or document.
 
+The test player's findings (`play-...`) come from running the course on this computer, so they cover only the parts
+that were opened. A file the course asks for while it runs (`play-missing-file`, `play-file-case`,
+`play-root-request`) follows the same rule as a link. A refused value (`play-refused`) is a problem when it is a
+completion, a pass or fail, or a score, and a warning otherwise.
+
 ## The zip
 
 | Id | Severity | Finding | What to do |
@@ -115,3 +120,21 @@ font or document.
 | `link-backslash` | Warning | A link uses backslashes | Write links with forward slashes (images/logo.png). Some browsers do not follow backslashes. |
 | `link-insecure` | Warning | A page loads a file from a website over http | LMSs are on https, and browsers block http pictures, scripts and frames inside https pages. Change the address to https if the website offers it. |
 | `links-scripted` | Note | Some links are made by scripts and were not checked | Package Doctor reads the links in the pages and style sheets. Files a course's scripts load as it runs are only found by running it. |
+
+## What the test player saw
+
+| Id | Severity | Finding | What to do |
+| --- | --- | --- | --- |
+| `play-no-api` | Problem | The course never started talking to the LMS | It did not call LMSInitialize (SCORM 1.2) or Initialize (SCORM 2004), so an LMS would record nothing. Usually the course did not find the LMS's API: it should look for window.API (SCORM 1.2) or window.API_1484_11 (SCORM 2004) in the windows above it. Check that it was published for this version of SCORM. |
+| `play-refused` | Warning | The LMS refused something the course sent | The value breaks SCORM's rules for that field, so a strict LMS does not keep it; a lenient one may. The detail names the field, the value and the rule. It is fixed in the course's publishing settings or its tracking code. |
+| `play-no-finish` | Problem | The course did not tell the LMS it was finished | It was closed without calling LMSFinish (SCORM 1.2) or Terminate (SCORM 2004). Many LMSs then keep nothing from the session, or leave the attempt open. The course should call it when the learner leaves, including when the window is simply closed. |
+| `play-no-status` | Warning | The course did not report completion | The session ended without the course setting cmi.core.lesson_status (SCORM 1.2) or cmi.completion_status (SCORM 2004), so the LMS shows the course as not attempted or unknown. That is right if the learner left early; if the course was finished, check its completion settings. |
+| `play-missing-file` | Problem | The course asked for a file that is not in the package | The file will be missing in the LMS too. It was found by running the course: a script or a page asked for it. Add the file to the package, or correct whatever asks for it. |
+| `play-file-case` | Problem | The course asked for a file with different capitals | The test player served it, as Windows would, but an LMS server that tells capitals apart will not. Make the name the course asks for and the file's name match exactly. |
+| `play-root-request` | Problem | The course asked for a file from the top of the website | An address starting with / points at the LMS's own website, not the package, so the file is not found there. Make the address relative (images/logo.png, not /images/logo.png). |
+| `play-external` | Note | The course loads files from other websites | These must be reachable from the learner's computer, and a school's network or the LMS's settings may block them. Over http rather than https, browsers block them inside an LMS. |
+| `play-no-statement` | Problem | The course sent nothing to the learning record store | No statement arrived, so nothing about the learner is recorded. Check that the course reads the endpoint, auth and actor from its address, as an LMS launches it, and that it was published for xAPI or cmi5. |
+| `play-statement-refused` | Problem | The learning record store refused a statement | The statement breaks xAPI's rules, so a real LRS refuses it too and the record is lost. The detail gives the rule. It is fixed in the course's publishing settings or its tracking code. |
+| `play-lrs-refused` | Warning | The learning record store refused a request | The course asked for or sent something the LRS could not accept, such as a saved place (a State document). The detail gives the reason. The course may carry on, but what it asked for is not kept. |
+| `play-cmi5-fetch` | Problem | The course did not fetch its cmi5 token | A cmi5 course must first POST to the fetch address in its launch address to get the token it signs its records with. Without it, nothing it sends is accepted. Check that the course was published for cmi5. |
+| `play-cmi5-rule` | Problem | A statement breaks a cmi5 rule | A cmi5 LMS must reject a statement that breaks its rules, or does not count it toward the course. The detail names the rule. It is fixed in the course's publishing settings or its tracking code. |

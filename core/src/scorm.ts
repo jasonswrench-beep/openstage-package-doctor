@@ -3,7 +3,7 @@
 // do (an attribute is found whatever prefix a tool used), and reports where a strict LMS would differ.
 
 import { finding, type Finding } from "./findings.ts";
-import type { LaunchPoint, OutlineNode, PackageKind, TrackingSetting } from "./model.ts";
+import type { LaunchPoint, OutlineNode, PackageKind, StartSettings, TrackingSetting } from "./model.ts";
 import { FileIndex, folderOf, isExternal, resolveIn, splitReference } from "./paths.ts";
 import { XML_NS, allText, attr, kid, kids, type XmlElement } from "./xml.ts";
 
@@ -320,6 +320,28 @@ export function readScorm(root: XmlElement, manifestPath: string, files: FileInd
     void owner;
   };
 
+  /** What the LMS hands the course when this item starts, for the test player. */
+  const startSettings = (item: XmlElement, id: string): StartSettings => {
+    const s: StartSettings = { id };
+    const text = (local: string) => allText(kidAnyCase(item, local)) || undefined;
+    const num = (v: string | undefined) => (v !== undefined && v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined);
+    s.launchData = text(is12 ? "datafromlms" : "dataFromLMS");
+    s.timeLimitAction = text(is12 ? "timelimitaction" : "timeLimitAction");
+    if (is12) {
+      s.masteryScore = num(text("masteryscore"));
+      s.maxTimeAllowed = text("maxtimeallowed");
+    } else {
+      const threshold = kidAnyCase(item, "completionThreshold");
+      if (threshold && attr(threshold, "completedByMeasure") !== "false") s.completionThreshold = num(attr(threshold, "minProgressMeasure") ?? (allText(threshold) || "1.0"));
+      const seq = kid(item, "sequencing", NS.imsss) ?? kidAnyCase(item, "sequencing");
+      const primary = kidAnyCase(kidAnyCase(seq, "objectives"), "primaryObjective");
+      if (primary && attr(primary, "satisfiedByMeasure") === "true") s.scaledPassingScore = num(allText(kidAnyCase(primary, "minNormalizedMeasure")) || "1.0");
+      s.maxTimeAllowed = attr(kidAnyCase(seq, "limitConditions"), "attemptAbsoluteDurationLimit");
+    }
+    for (const k of Object.keys(s) as (keyof StartSettings)[]) if (s[k] === undefined) delete s[k];
+    return s;
+  };
+
   const walk = (item: XmlElement, depth: number): OutlineNode => {
     noteId(item);
     const id = attr(item, "identifier") ?? "";
@@ -337,7 +359,7 @@ export function readScorm(root: XmlElement, manifestPath: string, files: FileInd
         else {
           const params = attr(item, "parameters") ?? "";
           const href = res.href + params;
-          const point: LaunchPoint = { title, from: `item ${id}`, href };
+          const point: LaunchPoint = { title, from: `item ${id}`, href, start: startSettings(item, id) };
           if (!res.scormType) {
             findings.push(finding("scorm-type-missing", `Resource "${res.id}" (launched by "${title}") has no ${is12 ? "adlcp:scormtype" : "adlcp:scormType"}.`, { ...where, line: res.line }));
           } else {

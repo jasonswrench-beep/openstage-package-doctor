@@ -15,6 +15,7 @@ const GROUPS: [string, string][] = [
   ["cmi5-", "cmi5"],
   ["xapi-", "xAPI (tincan.xml)"],
   ["link", "Links in the pages"],
+  ["play-", "What the test player saw"],
 ];
 
 export function checksDoc(): string {
@@ -34,6 +35,11 @@ export function checksDoc(): string {
     "A broken link (`link-broken`) or a link that differs in capitals only (`link-case`) is a problem when the file is one",
     "the course needs to run (a script, style sheet, page or data file) and a warning when it is a picture, sound, video,",
     "font or document.",
+    "",
+    "The test player's findings (`play-...`) come from running the course on this computer, so they cover only the parts",
+    "that were opened. A file the course asks for while it runs (`play-missing-file`, `play-file-case`,",
+    "`play-root-request`) follows the same rule as a link. A refused value (`play-refused`) is a problem when it is a",
+    "completion, a pass or fail, or a score, and a warning otherwise.",
   ];
   let current = "";
   for (const [id, rule] of Object.entries(RULES)) {
