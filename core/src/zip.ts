@@ -25,6 +25,9 @@ export interface ZipEntry {
   isDirectory: boolean;
   crc32: number;
   localHeaderOffset: number;
+  /** The last-modified time and date, in the zip's own (MS-DOS) form. */
+  dosTime: number;
+  dosDate: number;
 }
 
 export class ZipError extends Error {
@@ -151,6 +154,8 @@ export class ZipArchive {
       }
       const flags = this.u16(at + 8);
       const method = this.u16(at + 10);
+      const dosTime = this.u16(at + 12);
+      const dosDate = this.u16(at + 14);
       const crc = this.u32(at + 16);
       let packedSize = this.u32(at + 20);
       let size = this.u32(at + 24);
@@ -195,15 +200,16 @@ export class ZipArchive {
         isDirectory,
         crc32: crc,
         localHeaderOffset,
+        dosTime,
+        dosDate,
       });
       at += 46 + nameLen + extraLen + commentLen;
     }
     return entries;
   }
 
-  /** Unpacks one entry. Throws a ZipError if it is encrypted, uses a method other than stored or deflate, or is damaged. */
-  read(entry: ZipEntry): Uint8Array {
-    if (entry.encrypted) throw new ZipError("damaged", `${entry.path} is password-protected.`);
+  /** An entry's bytes as they are stored in the zip, still packed: for copying it into a new zip unchanged. */
+  packed(entry: ZipEntry): Uint8Array {
     const at = entry.localHeaderOffset;
     if (at + 30 > this.bytes.length || this.u32(at) !== SIG_LOCAL) {
       throw new ZipError("damaged", `${entry.path} could not be found inside the zip where its table of contents says it is.`);
@@ -211,7 +217,13 @@ export class ZipArchive {
     const start = at + 30 + this.u16(at + 26) + this.u16(at + 28);
     const end = start + entry.packedSize;
     if (end > this.bytes.length) throw new ZipError("damaged", `${entry.path} is cut short.`);
-    const packed = this.bytes.subarray(start, end);
+    return this.bytes.subarray(start, end);
+  }
+
+  /** Unpacks one entry. Throws a ZipError if it is encrypted, uses a method other than stored or deflate, or is damaged. */
+  read(entry: ZipEntry): Uint8Array {
+    if (entry.encrypted) throw new ZipError("damaged", `${entry.path} is password-protected.`);
+    const packed = this.packed(entry);
     let out: Uint8Array;
     if (entry.method === 0) out = packed;
     else if (entry.method === 8) {

@@ -268,6 +268,35 @@ select {
 }
 .play-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-3); margin: var(--os-space-3) 0; }
 
+/* Changing the package. */
+.changes-view { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--os-space-4); }
+.options { border: 1px solid var(--os-divider); border-radius: var(--os-radius); padding: var(--os-space-2) var(--os-space-4); margin: 0 0 var(--os-space-3); }
+.options legend { font-weight: 600; padding: 0 var(--os-space-1); }
+.option { padding: var(--os-space-2) 0; }
+.option + .option { border-top: 1px solid var(--os-divider); }
+.option-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-1); }
+.option-label > label { display: inline-flex; align-items: center; gap: var(--os-space-1); }
+.option-label input[type="checkbox"] { width: 18px; height: 18px; margin: 0 var(--os-space-1) 0 0; accent-color: var(--pd-action); }
+.option-detail { margin: var(--os-space-1) 0 0 30px; font-size: var(--os-small-size); }
+.number, .text-input {
+  height: var(--os-control-height);
+  padding: 0 var(--os-space-2);
+  border: 1px solid var(--os-control-edge);
+  border-radius: var(--os-radius-sm);
+  background: var(--os-surface);
+  color: var(--os-text);
+  font: inherit;
+}
+.number { width: 6em; }
+.text-input { width: min(36em, 100%); }
+progress { width: 200px; height: 12px; accent-color: var(--pd-action); }
+.changes { list-style: none; margin: 0 0 var(--os-space-3); padding: 0; }
+.change { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--os-space-3); padding: var(--os-space-2) 0; border-bottom: 1px solid var(--os-divider); }
+.change p { margin: 2px 0 0; font-size: var(--os-small-size); }
+.button--small { height: 26px; padding: 0 var(--os-space-3); font-size: var(--os-small-size); }
+.saved p { margin: var(--os-space-3) 0 var(--os-space-2); }
+.button:disabled { opacity: 0.55; cursor: default; }
+
 /* The test player: the course on the left, what the LMS saw on the right. It fills the window below the bar. */
 main:has(.player) { padding-bottom: 36px; }
 .player {

@@ -12,6 +12,7 @@ import type { ZipArchive } from "../../core/src/zip.ts";
 import { badge, copyText, findingItem, h, type Child } from "./dom.ts";
 import { icon } from "./icons.ts";
 import { openPlayer } from "./player.ts";
+import { openChanges, PackageChanges } from "./changes.ts";
 import { buildTree, type Folder } from "./tree.ts";
 
 const main = document.getElementById("main")!;
@@ -29,6 +30,8 @@ let current: OpenedPackage | undefined;
 /** The open zip, for the test player, and the player's sitting once it has been opened. */
 let archive: ZipArchive | undefined;
 let playSession: PlaySession | undefined;
+/** The changes being gathered for a new package, once the person has started some. */
+let changes: PackageChanges | undefined;
 
 function say(message: string): void {
   // Emptied first, so the same words said twice are still read out.
@@ -40,6 +43,7 @@ function welcome(): void {
   current = undefined;
   archive = undefined;
   playSession = undefined;
+  changes = undefined;
   shellDoc.textContent = "";
   copyButton.disabled = true;
   const button = h("button", { type: "button", class: "button button--primary button--large" }, icon("open"), "Open a package...");
@@ -57,15 +61,20 @@ function welcome(): void {
   );
 }
 
+/** Opens a package that is already in memory: a file just read, or a package Package Doctor has just written. */
+function openBytes(bytes: Uint8Array, name: string): void {
+  const opened = openPackageSession(bytes, name);
+  archive = opened.archive;
+  playSession = undefined;
+  changes = undefined;
+  show(opened.report);
+}
+
 async function openFile(file: File): Promise<void> {
   say(`Opening ${file.name}...`);
   main.setAttribute("aria-busy", "true");
   try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const opened = openPackageSession(bytes, file.name);
-    archive = opened.archive;
-    playSession = undefined;
-    show(opened.report);
+    openBytes(new Uint8Array(await file.arrayBuffer()), file.name);
   } catch (e) {
     main.replaceChildren(
       h("section", { class: "welcome" }, h("h1", { tabindex: "-1", id: "report-title" }, `${file.name} could not be opened`), h("p", {}, e instanceof Error ? e.message : String(e))),
@@ -147,6 +156,23 @@ function show(r: OpenedPackage, focusSection?: string): void {
       play.playable.length === 0 ? h("p", {}, "There is nothing to play: no start page is in the package.") : h("div", { class: "play-start" }, choose ? h("label", { class: "field" }, "Part ", choose) : null, button),
       play.skipped.length ? h("ul", { class: "plain" }, ...play.skipped.map((s) => h("li", {}, h("strong", {}, s.title), ` cannot be played here. ${s.why}`))) : null,
       runs ? h("p", { class: "muted" }, `So far the test player has launched it ${runs === 1 ? "once" : `${runs} times`} and found ${earlier.length === 0 ? "nothing" : earlier.length === 1 ? "one thing" : `${earlier.length} things`} to look at. They are listed beside the course in the player.`) : null,
+    );
+  }
+
+  // Changing it.
+  if (archive && r.files.length) {
+    const button = h("button", { type: "button", class: "button" }, "Change the package...");
+    button.addEventListener("click", () => {
+      changes ??= new PackageChanges(r, archive!);
+      openChanges(changes, { main, say, back: () => show(r, "change"), open: (bytes, name) => openBytes(bytes, name) });
+    });
+    const waiting = changes?.changes.size ?? 0;
+    section(
+      "change",
+      "Change it",
+      h("p", {}, "Make the package smaller (photographs, video, sound and text files), or replace any file in it. The changes are saved as a new package; this one is never changed."),
+      h("div", { class: "play-start" }, button),
+      waiting ? h("p", { class: "muted" }, `${waiting} change${waiting === 1 ? " is" : "s are"} waiting to be saved.`) : null,
     );
   }
 

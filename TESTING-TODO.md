@@ -18,6 +18,11 @@ The automated tests (`RUN TESTS.bat`) build every package they check. These need
       formats: does each one start, track and resume as it does in a real LMS, and is every refusal one a real LMS
       makes too? Note any the player refuses that LMSs accept, and decide whether the stand-in is too strict.
 - [ ] The test player with a course that plays video: seeking backward and forward, and memory use while it plays.
+- [ ] Make it smaller on courses from other programs, then play the new package and look: are pictures and video
+      still right, does a course with a sprite sheet still draw correctly, and does the LMS take the new zip?
+- [ ] Make it smaller on a long video (20 minutes or more): how long it takes, memory use, and whether picture and
+      sound stay together to the end.
+- [ ] Save as a new package with a screen reader: the Save As box, and the status line saying where it was saved.
 - [ ] The test player with a screen reader (NVDA): the status line says when the course starts, finishes and is
       refused; the summary and the log can be reached and scrolled by keyboard.
 
@@ -31,6 +36,16 @@ Read-only, the reports checked by eye:
   `favicon.png`, all real; 0.07 seconds.
 - A Brightspace question library export: recognised as a question library, not a SCORM course.
 - A 96 MB program archive with 517 backslashed names and a manifest deep in a folder: both reported; 0.1 seconds.
+
+Change the package, in the built program and in the browser preview:
+
+- The third-party SCORM 1.2 course (72.1 MB): its four stock photographs (11 to 15 MB each, up to 7,360 pixels wide)
+  came down to 120 to 490 KB at 1,920 pixels; saved as a new package of 20.9 MB in about 16 seconds in all. The new
+  package opens with the same two warnings as the original and plays the same in the test player.
+- A 36-second 1080p lesson video from OpenStage Studio (H.264 and AAC, 7.7 MB): 1280 by 720 at 1.3 megabits a
+  second, 2.9 MB, the same 1,070 frames and length, its sound kept; the words on screen are sharp. Saved through the
+  window's Save As box. A fragmented MP4 recorded by the browser came out right too.
+- Replacing a file: a name not in the package is caught, a file of another kind is warned about, Undo works.
 
 The test player, in the built program and in the browser preview:
 

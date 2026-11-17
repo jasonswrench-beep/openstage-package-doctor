@@ -1,7 +1,7 @@
 {
   "name": "openstage-package-doctor-app",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "The OpenStage Package Doctor window: a Tauri shell around a web page that uses ../core.",
   "license": "Apache-2.0",
@@ -17,5 +17,9 @@
     "@types/node": "^24.0.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "mp4-muxer": "^5.2.2",
+    "mp4box": "^2.5.0"
   }
 }
