@@ -20,7 +20,17 @@ export interface XmlElement {
   children: XmlElement[];
   /** The element's own text (not its children's), with entities decoded. */
   text: string;
+  /** Its text and child elements in document order, for mixed content such as a translation with bold in it. */
+  nodes: (string | XmlElement)[];
   line: number;
+}
+
+function addText(el: XmlElement, s: string): void {
+  if (!s) return;
+  el.text += s;
+  const last = el.nodes[el.nodes.length - 1];
+  if (typeof last === "string") el.nodes[el.nodes.length - 1] = last + s;
+  else el.nodes.push(s);
 }
 
 export class XmlError extends Error {
@@ -137,7 +147,7 @@ export function parseXml(source: string): XmlElement {
     const textEnd = lt < 0 ? source.length : lt;
     if (textEnd > i) {
       const raw = source.slice(i, textEnd);
-      if (stack.length) stack[stack.length - 1]!.el.text += decode(raw, i);
+      if (stack.length) addText(stack[stack.length - 1]!.el, decode(raw, i));
       else if (raw.trim()) fail(root ? "There is text after the end of the document." : "There is text before the document starts.", i);
     }
     if (lt < 0) break;
@@ -151,7 +161,7 @@ export function parseXml(source: string): XmlElement {
       const end = source.indexOf("]]>", i + 9);
       if (end < 0) fail("A CDATA section is never closed (]]>).", i);
       if (!stack.length) fail("A CDATA section is outside the document.", i);
-      stack[stack.length - 1]!.el.text += source.slice(i + 9, end);
+      addText(stack[stack.length - 1]!.el, source.slice(i + 9, end));
       i = end + 3;
     } else if (source.startsWith("<?", i)) {
       const end = source.indexOf("?>", i + 2);
@@ -224,12 +234,15 @@ export function parseXml(source: string): XmlElement {
         if (ns === undefined) fail(`The prefix "${prefix}:" in ${qname} is used but never declared with xmlns:${prefix}="...".`, at);
         return { prefix, local, ns: ns! };
       };
-      const el: XmlElement = { name, ...split(name, tagAt, false), attrs: [], children: [], text: "", line: where(tagAt)[0] };
+      const el: XmlElement = { name, ...split(name, tagAt, false), attrs: [], children: [], text: "", nodes: [], line: where(tagAt)[0] };
       for (const a of rawAttrs) {
         if (a.name === "xmlns" || a.name.startsWith("xmlns:")) continue;
         el.attrs.push({ name: a.name, value: a.value, ...split(a.name, a.at, true) });
       }
-      if (stack.length) stack[stack.length - 1]!.el.children.push(el);
+      if (stack.length) {
+        stack[stack.length - 1]!.el.children.push(el);
+        stack[stack.length - 1]!.el.nodes.push(el);
+      }
       else root = el;
       if (!selfClosing) stack.push({ el, scope, at: tagAt });
       i = j;

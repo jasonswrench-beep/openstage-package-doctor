@@ -17,7 +17,10 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   that serves the files and keeps the log (`session.ts`). They are as strict as the standards, so a value one LMS
   accepts and another refuses shows as refused, with the reason. Writing a new package is `write.ts` (files not
   changed are copied exactly as stored); `media/shrink.ts` chooses what to make smaller and `media/wav.ts` does WAV
-  sound.
+  sound. Translation is `translate/`: `inline.ts` and `xliff.ts` are OpenStage Author's XLIFF 1.2 form (its
+  `tools/xliff.py`), ported to TypeScript so both programs write the same thing; `extract.ts` finds the words in any
+  package's pages, captions and manifest and rebuilds each file byte for byte except the words (in its own
+  encoding); `docx.ts` is the Word table; `apply.ts` puts a translation back.
 - `app/`: the Tauri window. `src/main.ts` draws the report and `src/player.ts` the test player. The Rust side
   (`src-tauri/`) is the window and one command, `check_accessibility` (`src-tauri/src/a11y.rs`): the page sends it
   the package's pages, style sheets and documents in one message (`src/a11y.ts`, `packMessage`), and it runs the
@@ -62,7 +65,10 @@ Anything not on `ROADMAP.md` is agreed with the user first.
 - C2, the accessibility rule engine (`openstage-a11y`, tag `a11y-v0.1.0`), is used for item 5, unchanged. Its status
   words and report are A11Y-1 section 4; Package Doctor shows them as they are and never turns them into its own
   problem, warning and note. A change to the rules is made in openstage-core.
-- C6, the translation layer, is item 6. It is still inside Author and OpenExplainer, not yet in the core.
+- C6, the translation layer, is used for item 6 by borrowing Author's form of XLIFF (the author's choice,
+  2026-11-17), not by sharing code: it is still inside Author (Python) and OpenExplainer (TypeScript, a different form
+  of inline tags), and not scheduled for the core. When C6 moves to openstage-core, `core/src/translate/inline.ts`
+  and `xliff.ts` are what move, and Package Doctor uses the core's copy. CORE-REQUESTS.md says so.
 - A format or rule change that another tool shares is made in openstage-core first.
 
 ## Names OpenStage Hub expects

@@ -26,6 +26,11 @@ The automated tests (`RUN TESTS.bat`) build every package they check. These need
 - [ ] The accessibility check on courses from other programs, both as stored and as the learner sees it: are the
       failures real, and is anything an accessibility checker (or a person) finds missing?
 - [ ] The accessibility section with a screen reader: one heading per rule, each status read as a word.
+- [ ] Translation: open an XLIFF file from Package Doctor in a real translation tool (OmegaT, Weblate, memoQ),
+      translate it there, and bring it back: does every piece go back, with its bold and links?
+- [ ] Translation: fill in the Word table in Word, as a translator would (tracked changes on and off), and bring it
+      back. Look at the table in Word too: is it easy to work in?
+- [ ] Translation of a real hand-made course, played afterwards in the test player in the new language.
 - [ ] The test player with a screen reader (NVDA): the status line says when the course starts, finishes and is
       refused; the summary and the log can be reached and scrolled by keyboard.
 
@@ -39,6 +44,17 @@ Read-only, the reports checked by eye:
   `favicon.png`, all real; 0.07 seconds.
 - A Brightspace question library export: recognised as a question library, not a SCORM course.
 - A 96 MB program archive with 517 backslashed names and a manifest deep in a folder: both reported; 0.1 seconds.
+
+Translation, in the browser preview and the tests:
+
+- A small hand-made SCORM 1.2 course (two pages, captions, a manifest): 17 pieces of text, about 96 words, found;
+  saved as XLIFF and as a Word table (Word opens the table: one table, 18 rows). A made-up translation came back:
+  13 pieces went back, and the 4 whose tags had been changed stayed in English and were listed; the new package
+  played in the test player with its pages in the new language (`lang="es"`), title, heading and alt text translated.
+- Every page, captions file and manifest of the three real samples comes back byte for byte when nothing is
+  translated. The third-party course: 51 pieces of text, mostly its help pages; its slides' words are in 34 script
+  and data files, which are not reached and are counted. OpenStage Author's lesson: only its title (its words are in
+  its player's data).
 
 The accessibility check, in the built program:
 

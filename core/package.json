@@ -1,7 +1,7 @@
 {
   "name": "openstage-package-doctor-core",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "Opens a SCORM 1.2, SCORM 2004, xAPI or cmi5 package and checks whether it will run. Used by the Package Doctor window and its command line.",
   "license": "Apache-2.0",

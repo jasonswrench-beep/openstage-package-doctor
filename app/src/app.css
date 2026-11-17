@@ -313,6 +313,7 @@ select {
 }
 .number { width: 6em; }
 .text-input { width: min(36em, 100%); }
+.text-input--short { width: 10em; }
 progress { width: 200px; height: 12px; accent-color: var(--pd-action); }
 .changes { list-style: none; margin: 0 0 var(--os-space-3); padding: 0; }
 .change { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--os-space-3); padding: var(--os-space-2) 0; border-bottom: 1px solid var(--os-divider); }

@@ -5,7 +5,7 @@ package from a publisher or a colleague and needs to know what is inside it befo
 
 Part of the OpenStage suite. Free and open source under the Apache License 2.0.
 
-## What it does today (0.4.0)
+## What it does today (0.5.0)
 
 - **Opens** SCORM 1.2, SCORM 2004 (2nd, 3rd and 4th editions), xAPI (`tincan.xml`) and cmi5 packages from a `.zip`,
   and shows:
@@ -48,13 +48,20 @@ Part of the OpenStage suite. Free and open source under the Apache License 2.0.
     its name and its kind, so nothing in the course has to change, and it is only replaced if it gets at least a tenth
     smaller. Pictures a script cuts up (sprite sheets and atlases), PNG and GIF pictures, and MP3 sound are left alone.
   - **replaces any file** with one you choose, under the old one's name.
+  - **translates** it: the words in its pages (paragraphs, headings, buttons, alt text, tooltips, the page title),
+    its captions and the titles the LMS shows go out as an XLIFF 1.2 file for a translation tool, in OpenStage
+    Author's own form of XLIFF, or as a Word table for a translator who works in Word. The translation comes back
+    in and is checked: a piece whose bold, links or placeholders were changed stays in the original language and is
+    listed. Each page's language is set. A pseudo-translation shows, in the test player, which words were reached.
+    Words a program keeps inside its scripts and data files (most of a Storyline, Rise or Captivate course) are not
+    reached, and the Translate part says how many such files there are.
 
   The new package can be opened straight away, to check it and play it. A 72 MB course of stock photographs came out
   at 21 MB; a 1080p lesson video went from 7.7 MB to 2.9 MB at 720p.
 
 Nothing is uploaded and nothing is changed: the package is only read, on your computer. No AI is involved.
 
-What's next is in [ROADMAP.md](ROADMAP.md): translation, and wrapping a PDF or video as a package.
+What's next is in [ROADMAP.md](ROADMAP.md): wrapping a PDF, a video or a folder of pages as a package.
 
 ## Using it
 
@@ -78,7 +85,8 @@ Needs Node.js 22.18 or later. Building the program needs Rust as well.
 
 - `core/` (TypeScript, no dependencies but fflate): reading zips and manifests, every check, and the test player's
   stand-in LMS and LRS (`core/src/play/`), writing a new zip (`core/src/write.ts`) and choosing what to make smaller
-  (`core/src/media/`). The window, the command line and the tests all use it.
+  (`core/src/media/`), and translation (`core/src/translate/`). The window, the command line and the tests all use
+  it.
 - `app/`: the window, a Tauri program (a Rust shell around a web page), with the suite's look. The Rust side runs the
   suite's accessibility engine (`openstage-a11y`, from openstage-core) on the files the page sends it. The test player's
   service worker serves the course's pages from the open zip on the window's own site, so a SCORM course finds the

@@ -10,8 +10,21 @@ build-session work, M is one to two weeks.
 | 3 | A local test player with a tracking log | Shows what the LMS will receive before anything is uploaded | S | **Done in 0.2.0** |
 | 4 | Compress media and replace any file inside the zip | LMS upload limits bite, and fixing one video should not need the source | M | **Done in 0.3.0** |
 | 5 | Accessibility preflight on C2 | The same report Author and Scroll give, for packages made anywhere | S | **Done in 0.4.0** |
-| 6 | Extract all text to XLIFF or .docx and put translations back (C6) | Translate a package with no source file | M | Next. Waits on C6 moving into openstage-core, or borrows Author's |
-| 7 | Wrap a PDF, a video or an HTML folder as a package | Small, and often what instructors actually need | S | Author's manifest writers (`player/src/*-manifest.ts`) are the start |
+| 6 | Extract all text to XLIFF or .docx and put translations back (C6) | Translate a package with no source file | M | **Done in 0.5.0**, borrowing Author's form of XLIFF |
+| 7 | Wrap a PDF, a video or an HTML folder as a package | Small, and often what instructors actually need | S | Next. Author's manifest writers (`player/src/*-manifest.ts`) are the start |
+
+## Left from item 6
+
+- Words kept inside a program's scripts and data files are not reached: most of a Storyline, Rise, Captivate or
+  iSpring course, and OpenStage Author's own published lessons (translate those in Author, from the project). Each
+  program keeps them its own way, so each would need its own reader; none is built.
+- Documents in a package (PDF, Word, PowerPoint) are translated outside and put back with Replace a file.
+- One language per package. A package holding several languages with a switcher (C6's second half) is not built.
+- A right-to-left language (Arabic, Hebrew) gets its language set on each page but not `dir="rtl"`: the course's own
+  layout decides how that would look.
+- In cmi5.xml and tincan.xml the manifest's words are replaced in place; a second `langstring` in the new language is
+  not added beside the first.
+- XLIFF 2.0 is not read (most tools can save 1.2). Not yet tried in a real translation tool (OmegaT, Weblate, memoQ).
 
 ## Left from item 5
 

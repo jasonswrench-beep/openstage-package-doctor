@@ -14,6 +14,7 @@ import type { ZipArchive } from "../../core/src/zip.ts";
 import { h } from "./dom.ts";
 import { icon } from "./icons.ts";
 import { shrinkPicture, shrinkVideo, type Shrunk } from "./shrink.ts";
+import { translatePanel } from "./translate.ts";
 
 export interface ChangesHost {
   main: HTMLElement;
@@ -24,13 +25,15 @@ export interface ChangesHost {
 }
 
 /** One change waiting to be saved. */
-interface Change {
+export interface Change {
   path: string;
   data: Uint8Array;
   /** What was done, in words. */
   how: string;
   /** The file's size before. */
   before: number;
+  /** For a translated file: the language. A translation is always made again from the file before it. */
+  translated?: string;
 }
 
 /** The changes for the package now open. They stay while the person goes back and forth to the report. */
@@ -41,11 +44,26 @@ export class PackageChanges {
   options: ShrinkOptions = { ...DEFAULT_SHRINK };
   results: ShrinkResult[] = [];
   savedAs = "";
+  /** The language the package was last translated into, for the new package's name. */
+  language?: string;
   private saved?: Uint8Array;
 
   constructor(report: OpenedPackage, archive: ZipArchive) {
     this.report = report;
     this.archive = archive;
+  }
+
+  /** A file as the changes have it: replaced or made smaller, but never translated (a translation starts from the
+   *  file as it was, so it can be done again). Undefined if it cannot be read. */
+  current(path: string): Uint8Array | undefined {
+    const c = this.changes.get(path);
+    if (c && !c.translated) return c.data;
+    const entry = this.archive.entries.find((e) => e.path === path);
+    try {
+      return entry ? this.archive.read(entry) : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   size(path: string): number {
@@ -70,12 +88,20 @@ function baseName(fileName: string): string {
   return fileName.replace(/\.zip$/i, "");
 }
 
+export interface FileKind {
+  description: string;
+  mime: string;
+  ending: string;
+}
+
+export const ZIP: FileKind = { description: "Course package (zip)", mime: "application/zip", ending: ".zip" };
+
 /** Saves bytes with the window's Save As box, or as a download where it has none. Returns the name, or "" if not saved. */
-async function saveZip(bytes: Uint8Array, suggested: string): Promise<string> {
+export async function saveFile(bytes: Uint8Array, suggested: string, kind: FileKind = ZIP): Promise<string> {
   const picker = (window as unknown as { showSaveFilePicker?: (o: unknown) => Promise<FileSystemFileHandle> }).showSaveFilePicker;
   if (picker) {
     try {
-      const handle = await picker({ suggestedName: suggested, types: [{ description: "Course package (zip)", accept: { "application/zip": [".zip"] } }] });
+      const handle = await picker({ suggestedName: suggested, types: [{ description: kind.description, accept: { [kind.mime]: [kind.ending] } }] });
       const writable = await handle.createWritable();
       await writable.write(bytes as BlobPart);
       await writable.close();
@@ -85,7 +111,7 @@ async function saveZip(bytes: Uint8Array, suggested: string): Promise<string> {
       // Some windows have the box but refuse it; fall through to a download.
     }
   }
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/zip" }));
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: kind.mime }));
   const a = h("a", { href: url, download: suggested });
   document.body.append(a);
   a.click();
@@ -315,8 +341,8 @@ export function openChanges(state: PackageChanges, host: ChangesHost): void {
       saveButton.disabled = false;
       return;
     }
-    const suggested = `${baseName(r.fileName)} (changed).zip`;
-    const name = await saveZip(bytes, suggested);
+    const suggested = `${baseName(r.fileName)} (${state.language ?? "changed"}).zip`;
+    const name = await saveFile(bytes, suggested);
     saveButton.disabled = false;
     if (!name) {
       host.say("Not saved.");
@@ -351,6 +377,7 @@ export function openChanges(state: PackageChanges, host: ChangesHost): void {
         h("div", { class: "play-start" }, h("label", { class: "field", for: "replace-which" }, "File in the package"), which, datalist, replaceButton, pickNew),
         replaceNote,
       ),
+      translatePanel(state, { say: host.say, changed: () => drawChanges() }),
       h("section", { class: "panel", "aria-labelledby": "changes-list-h" }, changesHeading, changesList, sizeLine, h("div", { class: "play-start" }, saveButton), savedLine),
     ),
   );
