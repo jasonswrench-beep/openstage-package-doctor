@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { reportText } from "../src/report.ts";
+import { noTrackingWords, reportText } from "../src/report.ts";
 import { checksDoc, DOC_PATH } from "../tools/make-checks-doc.ts";
 import { RULES } from "../src/findings.ts";
 import { makeZip, open, PAGE, scorm12 } from "./helpers.ts";
@@ -18,6 +18,16 @@ test("the text report: verdict, counts, each finding with what to do, tracking, 
   assert.match(text, /Tracking settings\n {2}Lesson one: Passing score: 80 \(adlcp:masteryscore\)/);
   assert.match(text, /Outline\n {2}- Test course\n {4}- Lesson one \(opens index\.html\)/);
   assert.match(text, /Not checked\n {2}Links that a course's scripts build/);
+});
+
+test("with no tracking settings, the text report says what the window says, and names the version when given", () => {
+  const plain = open({ "index.html": PAGE }, "pages.zip");
+  assert.equal(noTrackingWords(plain), "None: there is no course manifest to read them from.");
+  assert.match(reportText(plain), /Tracking settings\n {2}None: there is no course manifest to read them from\./);
+  const course = open({ "imsmanifest.xml": scorm12().replace(/<adlcp:masteryscore>[^<]*<\/adlcp:masteryscore>/, "") , "index.html": PAGE }, "course.zip");
+  assert.equal(course.tracking.length, 0);
+  assert.match(reportText(course), /Tracking settings\n {2}None in the manifest\. The LMS records what the course itself reports\./);
+  assert.match(reportText(plain, "0.6.1"), /^OpenStage Package Doctor 0\.6\.1 report: pages\.zip\n/);
 });
 
 test("the command line: text, JSON and exit codes", () => {

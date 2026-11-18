@@ -13,10 +13,18 @@ function outlineLines(nodes: OutlineNode[], depth: number, out: string[]): void 
   }
 }
 
-export function reportText(r: OpenedPackage): string {
+/** What the report says when there are no tracking settings: the window and the command line say the same. */
+export function noTrackingWords(r: OpenedPackage): string {
+  return r.kind === "unknown" || r.kind === "content-package" || r.kind === "aicc"
+    ? "None: there is no course manifest to read them from."
+    : "None in the manifest. The LMS records what the course itself reports.";
+}
+
+/** The report as plain text. `version`, when given, is the program's, named in the first line. */
+export function reportText(r: OpenedPackage, version?: string): string {
   const out: string[] = [];
   const c = counts(r.findings);
-  out.push(`OpenStage Package Doctor report: ${r.fileName}`);
+  out.push(`OpenStage Package Doctor${version ? ` ${version}` : ""} report: ${r.fileName}`);
   out.push("");
   out.push(verdict(r));
   out.push(`${c.problem} problem${c.problem === 1 ? "" : "s"}, ${c.warning} warning${c.warning === 1 ? "" : "s"}, ${c.note} note${c.note === 1 ? "" : "s"}.`);
@@ -48,7 +56,7 @@ export function reportText(r: OpenedPackage): string {
 
   out.push("");
   out.push("Tracking settings");
-  if (!r.tracking.length) out.push("  None in the manifest. The LMS records what the course itself reports.");
+  if (!r.tracking.length) out.push(`  ${noTrackingWords(r)}`);
   for (const t of r.tracking) out.push(`  ${t.scope}: ${t.name}: ${t.value} (${t.source})`);
 
   if (r.outline.length) {

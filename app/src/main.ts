@@ -4,12 +4,14 @@
 // heading when a package opens, and the status line says the verdict once.
 
 import { counts, formatBytes, openPackageSession, verdict } from "../../core/src/open.ts";
-import { reportText } from "../../core/src/report.ts";
+import { noTrackingWords, reportText } from "../../core/src/report.ts";
 import { SEVERITY_ORDER, SEVERITY_WORDS, type Severity } from "../../core/src/findings.ts";
 import type { OpenedPackage, OutlineNode } from "../../core/src/model.ts";
 import { PlaySession, playables, STANDARD_WORDS } from "../../core/src/play/session.ts";
 import type { ZipArchive } from "../../core/src/zip.ts";
-import { badge, copyText, findingItem, h, type Child } from "./dom.ts";
+import { isTauri } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { ask, badge, copyText, findingItem, h, type Child } from "./dom.ts";
 import { icon } from "./icons.ts";
 import { openPlayer } from "./player.ts";
 import { openChanges, PackageChanges } from "./changes.ts";
@@ -17,14 +19,21 @@ import { openWrap } from "./wrap-view.ts";
 import { a11yText, a11yView, canCheck, checkAccessibility, filesToCheck, type PackageCheck } from "./a11y.ts";
 import { buildTree, type Folder } from "./tree.ts";
 
+/** The program's version, written in by build.mjs from package.json. */
+declare const __PD_VERSION__: string;
+const VERSION = typeof __PD_VERSION__ === "string" ? __PD_VERSION__ : "";
+
 const main = document.getElementById("main")!;
+const shell = document.querySelector<HTMLElement>(".shell")!;
 const status = document.getElementById("status")!;
 const shellDoc = document.getElementById("shell-doc")!;
+const homeButton = document.getElementById("home-button") as HTMLButtonElement;
 const openButton = document.getElementById("open-button") as HTMLButtonElement;
 const copyButton = document.getElementById("copy-button") as HTMLButtonElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const dropVeil = document.getElementById("drop-veil")!;
 
+homeButton.append(icon("home"), "Start page");
 openButton.append(icon("open"), "Open package...");
 copyButton.append(icon("copy"), "Copy report");
 
@@ -71,17 +80,51 @@ function say(message: string): void {
   window.setTimeout(() => (status.textContent = message), 50);
 }
 
+/** The window's title: the package open, then the program, as Windows shows it on the taskbar. */
+function windowTitle(doc?: string): void {
+  const title = doc ? `${doc} - OpenStage Package Doctor` : "OpenStage Package Doctor";
+  document.title = title;
+  if (isTauri()) getCurrentWindow().setTitle(title).catch(() => undefined);
+}
+
+/**
+ * Before the package's waiting changes would be lost (another package opened, the start page, the window closed):
+ * asks, unless every change is in a package already saved. True when it is all right to go on.
+ */
+async function mayForgetChanges(doing: string, yes: string): Promise<boolean> {
+  if (!changes?.unsaved || !current) return true;
+  const n = changes.changes.size;
+  const one = n === 1;
+  const them = one ? "it" : "them";
+  return ask(
+    one ? "Forget the change waiting to be saved?" : `Forget the ${n} changes waiting to be saved?`,
+    `${one ? "The change" : `The ${n} changes`} to ${current.fileName} ${one ? "is" : "are"} not in a saved package yet. ${doing} forgets ${them}. To keep ${them}, choose Keep, then Save as a new package in Change the package.`,
+    yes,
+    "Keep",
+  );
+}
+
+/** Opens bytes as a package, once any waiting changes may be forgotten. */
+async function openBytesAsked(bytes: Uint8Array, name: string): Promise<void> {
+  if (await mayForgetChanges(`Opening ${name}`, "Forget and open")) openBytes(bytes, name);
+}
+
 function welcome(): void {
   current = undefined;
   archive = undefined;
   playSession = undefined;
   changes = undefined;
   shellDoc.textContent = "";
+  homeButton.hidden = true;
+  windowTitle();
   copyButton.disabled = true;
   const button = h("button", { type: "button", class: "button button--primary button--large" }, icon("open"), "Open a package...");
   button.addEventListener("click", () => fileInput.click());
   const wrapButton = h("button", { type: "button", class: "button" }, "Make a package from a PDF, a video or a folder...");
-  wrapButton.addEventListener("click", () => openWrap({ main, say, back: () => welcome(), open: (bytes, name) => openBytes(bytes, name) }));
+  wrapButton.addEventListener("click", () => {
+    homeButton.hidden = false;
+    openWrap({ main, say, back: () => welcome(), open: (bytes, name) => void openBytesAsked(bytes, name) });
+  });
   main.replaceChildren(
     h(
       "section",
@@ -94,6 +137,7 @@ function welcome(): void {
       h("h2", {}, "No package yet?"),
       h("p", {}, "Wrap a PDF, a video or a folder of web pages as a SCORM, cmi5 or xAPI package an LMS can import."),
       wrapButton,
+      h("p", { class: "muted welcome-foot" }, `OpenStage Package Doctor${VERSION ? ` ${VERSION}` : ""}. Apache License 2.0. Part of the OpenStage suite.`),
     ),
   );
 }
@@ -108,11 +152,16 @@ function openBytes(bytes: Uint8Array, name: string): void {
 }
 
 async function openFile(file: File): Promise<void> {
+  if (!(await mayForgetChanges(`Opening ${file.name}`, "Forget and open"))) {
+    say(`${file.name} was not opened. The changes are still waiting.`);
+    return;
+  }
   say(`Opening ${file.name}...`);
   main.setAttribute("aria-busy", "true");
   try {
     openBytes(new Uint8Array(await file.arrayBuffer()), file.name);
   } catch (e) {
+    homeButton.hidden = false;
     main.replaceChildren(
       h("section", { class: "welcome" }, h("h1", { tabindex: "-1", id: "report-title" }, `${file.name} could not be opened`), h("p", {}, e instanceof Error ? e.message : String(e))),
     );
@@ -126,7 +175,9 @@ async function openFile(file: File): Promise<void> {
 function show(r: OpenedPackage, focusSection?: string): void {
   current = r;
   copyButton.disabled = false;
+  homeButton.hidden = false;
   shellDoc.textContent = r.fileName;
+  windowTitle(r.fileName);
   const c = counts(r.findings);
   const state: Severity | "ok" = c.problem ? "problem" : c.warning ? "warning" : "ok";
   const stateWord = c.problem ? "Problems found" : c.warning ? "Warnings only" : "No problems found";
@@ -215,7 +266,7 @@ function show(r: OpenedPackage, focusSection?: string): void {
           // a damaged file is left out; the report already says so
         }
       }
-      openWrap({ main, say, back: () => show(r, "wrap"), open: (bytes, name) => openBytes(bytes, name) }, { kind: "site", name: r.fileName.replace(/\.zip$/i, ""), files });
+      openWrap({ main, say, back: () => show(r, "wrap"), open: (bytes, name) => void openBytesAsked(bytes, name) }, { kind: "site", name: r.fileName.replace(/\.zip$/i, ""), files });
     });
     section("wrap", "Wrap it", h("p", {}, `This zip has ${pages.length} web page${pages.length === 1 ? "" : "s"} but is not a course package an LMS can import. Package Doctor can wrap it as one: a SCORM, cmi5 or xAPI package that starts at the page you choose and tells the LMS when the learner has finished.`), h("div", { class: "play-start" }, button));
   }
@@ -225,7 +276,7 @@ function show(r: OpenedPackage, focusSection?: string): void {
     const button = h("button", { type: "button", class: "button" }, "Change the package...");
     button.addEventListener("click", () => {
       changes ??= new PackageChanges(r, archive!);
-      openChanges(changes, { main, say, back: () => show(r, "change"), open: (bytes, name) => openBytes(bytes, name) });
+      openChanges(changes, { main, say, back: () => show(r, "change"), open: (bytes, name) => void openBytesAsked(bytes, name) });
     });
     const waiting = changes?.changes.size ?? 0;
     section(
@@ -259,7 +310,7 @@ function show(r: OpenedPackage, focusSection?: string): void {
             ),
           ),
         )
-      : h("p", {}, r.kind === "unknown" || r.kind === "content-package" || r.kind === "aicc" ? "None: there is no course manifest to read them from." : "None in the manifest. The LMS records what the course itself reports."),
+      : h("p", {}, noTrackingWords(r)),
   );
 
   // Outline.
@@ -358,6 +409,38 @@ function filesTree(r: OpenedPackage): HTMLElement {
   return folderList(root);
 }
 
+// The start page, from any view.
+homeButton.addEventListener("click", async () => {
+  if (!(await mayForgetChanges("Going to the start page", "Forget and go to the start page"))) return;
+  welcome();
+  const heading = document.getElementById("welcome-title");
+  heading?.setAttribute("tabindex", "-1");
+  heading?.focus();
+  say("The start page.");
+});
+
+// Closing the window with changes waiting: asked first. Nothing else stops the window closing.
+if (isTauri()) {
+  void getCurrentWindow().onCloseRequested(async (event) => {
+    if (!(await mayForgetChanges("Closing Package Doctor", "Forget and close"))) event.preventDefault();
+  });
+}
+
+// Focus never sits under the bar or the status line (WCAG 2.4.11). The style sheet's scroll padding does it where the
+// browser scrolls to the focus itself; this covers focus that lands without a scroll.
+document.addEventListener("focusin", (e) => {
+  const el = e.target;
+  if (!(el instanceof HTMLElement) || el === main || el.closest("dialog")) return;
+  window.requestAnimationFrame(() => {
+    const box = el.getBoundingClientRect();
+    const top = getComputedStyle(shell).position === "sticky" ? shell.getBoundingClientRect().bottom + 8 : 8;
+    const bottom = window.innerHeight - status.getBoundingClientRect().height - 8;
+    if (box.height > bottom - top) return;
+    if (box.bottom > bottom) window.scrollBy(0, box.bottom - bottom);
+    else if (box.top < top) window.scrollBy(0, box.top - top);
+  });
+});
+
 // Opening: the button, Ctrl+O, and dropping a file.
 openButton.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", () => {
@@ -368,7 +451,7 @@ fileInput.addEventListener("change", () => {
 copyButton.addEventListener("click", async () => {
   if (!current) return;
   const check = a11yChecks.get(current);
-  await copyText(reportText(current) + (check ? a11yText(check) : ""));
+  await copyText(reportText(current, VERSION || undefined) + (check ? a11yText(check) : ""));
   say("The report is copied. Paste it into an email or a document.");
 });
 document.addEventListener("keydown", (e) => {

@@ -54,6 +54,28 @@ test("a video gets its captions as a track; a folder goes into site/ untouched",
   assert.throws(() => wrap({ files: new Map([["index.html", PDF]]), main: "index.html" }), /needs for itself/);
 });
 
+/** WCAG's contrast ratio between two colours written #rrggbb. */
+function contrast(a: string, b: string): number {
+  const lum = (hex: string) => {
+    const [r, g, bl] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+test("a video page's own words (shown where the video cannot play) are readable on the video's black", () => {
+  const video = wrap({ kind: "video", files: new Map([["talk.mp4", MP4]]), main: "talk.mp4", complete: "end" });
+  const page = new TextDecoder().decode(video.archive!.read(video.archive!.entries.find((e) => e.path === "index.html")!));
+  const rule = (selector: string) => new RegExp(`^\\s*${selector} \\{([^}]*)\\}`, "m").exec(page)?.[1] ?? "";
+  const back = /background: (#[0-9a-f]{6})/.exec(rule("video"))?.[1];
+  const words = /(?:^|;)\s*color: (#[0-9a-f]{6})/.exec(rule("video"))?.[1];
+  const link = /color: (#[0-9a-f]{6})/.exec(rule("video a"))?.[1];
+  assert.ok(back && words && link, "the video and its link have colours of their own");
+  assert.ok(contrast(words, back) >= 4.5, `words ${contrast(words, back).toFixed(1)}:1`);
+  assert.ok(contrast(link, back) >= 4.5, `link ${contrast(link, back).toFixed(1)}:1`);
+});
+
 /** Runs the wrapped package's tracking script against the test player's stand-in LMS or LRS, as a browser would. */
 async function play(standard: WrapStandard, complete: WrapInput["complete"], act: (page: { click(): void; leave(): void; media: { currentTime: number; duration: number; fire(e: string): void } }) => void, kind: WrapInput["kind"] = "pdf") {
   const files = kind === "video" ? new Map([["talk.mp4", MP4]]) : new Map([["guide.pdf", PDF]]);

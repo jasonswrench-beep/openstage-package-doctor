@@ -4,6 +4,9 @@
 import { build } from "esbuild";
 import { readFileSync, writeFileSync } from "node:fs";
 
+// The version the window shows (the start page, and the first line of a copied report).
+const version = JSON.parse(readFileSync("package.json", "utf-8")).version;
+
 await build({
   entryPoints: ["src/main.ts"],
   bundle: true,
@@ -11,6 +14,7 @@ await build({
   target: "es2022",
   outfile: "web/main.js",
   logLevel: "warning",
+  define: { __PD_VERSION__: JSON.stringify(version) },
 });
 // The test player's service worker: a file of its own at the top of web/, so it can serve /play/.
 await build({

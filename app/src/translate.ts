@@ -148,7 +148,7 @@ export function translatePanel(state: PackageChanges, host: { say(message: strin
       const files = put(m.translations, language, "Translated");
       outcome.replaceChildren(
         ...([
-        h("p", {}, h("strong", {}, `${m.translated} of ${units.length} pieces of text translated into ${language}`), `, in ${files} file${files === 1 ? "" : "s"}. ${m.untranslated ? `${m.untranslated} had no translation yet and stay in the original language. ` : ""}Nothing is saved until you choose Save as a new package.`),
+        h("p", {}, h("strong", {}, `${m.translated} of ${units.length} pieces of text translated into ${language}`), `, in ${files} file${files === 1 ? "" : "s"}. ${m.untranslated ? `${m.untranslated} had no translation yet and ${m.untranslated === 1 ? "stays" : "stay"} in the original language. ` : ""}Nothing is saved until you choose Save as a new package.`),
         m.kept.length
           ? h(
               "div",
@@ -158,7 +158,7 @@ export function translatePanel(state: PackageChanges, host: { say(message: strin
               m.kept.length > 50 ? h("p", { class: "muted" }, `And ${m.kept.length - 50} more.`) : null,
             )
           : null,
-        m.unknown ? h("p", { class: "muted" }, `${m.unknown} pieces of text in the file are not in this package and were left out.`) : null,
+        m.unknown ? h("p", { class: "muted" }, m.unknown === 1 ? "1 piece of text in the file is not in this package and was left out." : `${m.unknown} pieces of text in the file are not in this package and were left out.`) : null,
         ] as (HTMLElement | null)[]).filter((x): x is HTMLElement => x !== null),
       );
       host.say(`${m.translated} pieces of text translated into ${language}${m.kept.length ? `; ${m.kept.length} could not be put back` : ""}.`);

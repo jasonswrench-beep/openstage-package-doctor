@@ -25,6 +25,11 @@ html, body {
   font-size: var(--os-text-size);
   line-height: 1.5;
 }
+/* Whatever gets focus is scrolled clear of the bar at the top and the status line at the bottom (WCAG 2.4.11). */
+html {
+  scroll-padding-top: calc(var(--os-shell-height) + var(--os-space-3));
+  scroll-padding-bottom: 48px;
+}
 
 :focus-visible {
   outline: 2px solid var(--os-focus);
@@ -89,6 +94,18 @@ html, body {
 .shell-button:disabled { color: var(--os-on-shell-muted); cursor: default; }
 .shell-button:focus-visible { outline-color: var(--os-focus-halo); box-shadow: 0 0 0 4px var(--os-focus); }
 
+/* A narrow window (or 400 percent zoom): the bar's buttons go onto a line of their own, the bar scrolls away with the
+   page instead of covering a quarter of it, and nothing is wider than the window (WCAG 1.4.10). */
+@media (max-width: 640px) {
+  html { scroll-padding-top: var(--os-space-3); }
+  .shell { position: static; flex-wrap: wrap; height: auto; min-height: var(--os-shell-height); padding: var(--os-space-2) var(--os-space-3); gap: var(--os-space-2); }
+  .shell-doc { display: none; }
+  .shell-spacer { flex-basis: 100%; height: 0; }
+  .welcome { margin: var(--os-space-4) auto; padding: var(--os-space-4); }
+  main { padding-left: var(--os-space-3); padding-right: var(--os-space-3); }
+  .panel { padding: var(--os-space-3); }
+}
+
 /* Buttons on the page. */
 .button {
   display: inline-flex;
@@ -110,7 +127,7 @@ html, body {
 main { display: block; padding: var(--os-space-5) var(--os-space-4) 64px; outline: none; }
 .muted { color: var(--os-muted); }
 code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.95em; overflow-wrap: anywhere; }
-h1 { font-size: 24px; line-height: 1.25; margin: 0 0 var(--os-space-1); outline: none; }
+h1 { font-size: 24px; line-height: 1.25; margin: 0 0 var(--os-space-1); outline: none; overflow-wrap: anywhere; }
 h2 { font-size: var(--os-title-size); margin: 0 0 var(--os-space-3); }
 h3 { font-size: var(--os-heading-size); margin: var(--os-space-4) 0 var(--os-space-2); display: flex; align-items: center; gap: var(--os-space-2); }
 h4 { font-size: var(--os-text-size); margin: 0 0 var(--os-space-1); }
@@ -128,9 +145,10 @@ a { color: var(--pd-action-text); }
 .welcome h1 { margin-bottom: var(--os-space-3); }
 .welcome .button { margin: var(--os-space-3) 0; }
 .welcome p { margin: var(--os-space-2) 0; }
+.welcome-foot { margin-top: var(--os-space-5) !important; padding-top: var(--os-space-3); border-top: 1px solid var(--os-divider); font-size: var(--os-small-size); }
 
 /* The report. */
-.report { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--os-space-4); }
+.report { max-width: 1040px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--os-space-4); }
 .report-head { display: grid; gap: var(--os-space-2); }
 .report-head > p { margin: 0; }
 .verdict {
@@ -255,7 +273,8 @@ section > .tree { padding-left: 0; }
 }
 
 /* Choosing in the report and the player. */
-.field { display: inline-flex; align-items: center; gap: var(--os-space-2); }
+.field { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-2); max-width: 100%; }
+.field select { min-width: 0; }
 select {
   height: var(--os-control-height);
   padding: 0 var(--os-space-2);
@@ -264,7 +283,7 @@ select {
   background: var(--os-surface);
   color: var(--os-text);
   font: inherit;
-  max-width: 28em;
+  max-width: min(28em, 100%);
 }
 .play-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-3); margin: var(--os-space-3) 0; }
 
@@ -293,7 +312,7 @@ select {
 .a11y-part > h4 { margin-top: var(--os-space-4); }
 
 /* Changing the package. */
-.changes-view { max-width: 1040px; margin: 0 auto; display: grid; gap: var(--os-space-4); }
+.changes-view { max-width: 1040px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--os-space-4); }
 .options { border: 1px solid var(--os-divider); border-radius: var(--os-radius); padding: var(--os-space-2) var(--os-space-4); margin: 0 0 var(--os-space-3); }
 .options legend { font-weight: 600; padding: 0 var(--os-space-1); }
 .panel.options { margin: 0; }
@@ -328,12 +347,13 @@ progress { width: 200px; height: 12px; accent-color: var(--pd-action); }
 main:has(.player) { padding-bottom: 36px; }
 .player {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--os-space-3);
   height: calc(100vh - var(--os-shell-height) - 24px - 36px);
   min-height: 480px;
 }
-.player-head { display: grid; gap: var(--os-space-1); }
+.player-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--os-space-1); }
 .player-head > p { margin: 0; }
 .player-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--os-space-2) var(--os-space-3); margin-top: var(--os-space-2); }
 .player-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: var(--os-space-3); min-height: 0; }
@@ -346,6 +366,8 @@ main:has(.player) { padding-bottom: 36px; }
   overflow: hidden;
 }
 .player-frame { display: block; width: 100%; height: 100%; border: 0; background: #ffffff; }
+/* The course has the keyboard: the ring goes round its frame, since the course may show none of its own. */
+.player-stage:focus-within { outline: 2px solid var(--os-focus); outline-offset: 2px; box-shadow: 0 0 0 4px var(--os-focus-halo); }
 .player-closed { display: grid; place-content: center; justify-items: center; gap: var(--os-space-3); height: 100%; padding: var(--os-space-5); text-align: center; }
 .player-closed p { margin: 0; max-width: 32em; }
 .player-panel { display: flex; flex-direction: column; gap: var(--os-space-3); min-height: 0; }
@@ -381,13 +403,29 @@ main:has(.player) { padding-bottom: 36px; }
 .log-entry--refused { border-left-color: var(--os-danger); background: var(--os-danger-tint); }
 @media (max-width: 960px) {
   .player { height: auto; }
-  .player-body { grid-template-columns: 1fr; }
+  .player-body { grid-template-columns: minmax(0, 1fr); }
   .player-stage { height: 70vh; }
   .player-summary { max-height: none; }
   .player-logbox { max-height: 60vh; flex: none; }
 }
 
+/* A question that needs an answer: the browser's own modal box, so focus stays inside it and Escape means no. */
+.ask {
+  max-width: min(34em, calc(100vw - 32px));
+  padding: var(--os-space-5);
+  border: 1px solid var(--os-divider);
+  border-radius: var(--os-radius-lg);
+  background: var(--os-surface);
+  color: var(--os-text);
+  box-shadow: var(--os-shadow-pop);
+}
+.ask::backdrop { background: rgba(13, 27, 48, 0.55); }
+.ask h2 { margin: 0 0 var(--os-space-2); }
+.ask p { margin: 0; }
+.ask .play-start { justify-content: flex-end; margin-bottom: 0; }
+
 @media (forced-colors: active) {
+  .ask { border-color: CanvasText; }
   .verdict, .badge, .finding, .tag, .a11y-status { border: 1px solid CanvasText; }
   .player-stage, .player-summary, .player-logbox { border-color: CanvasText; }
   .log-entry--refused { border-left-color: CanvasText; }

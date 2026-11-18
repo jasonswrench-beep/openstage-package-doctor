@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "What the Package Doctor window may do: the core defaults only. Files reach it through the file picker or by dropping them on the window, never by the page reading the disk.",
+  "description": "What the Package Doctor window may do: the core defaults, naming itself after the package open, and closing once the person has said that changes waiting may be forgotten. Files reach it through the file picker or by dropping them on the window, never by the page reading the disk.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-set-title", "core:window:allow-destroy"]
 }

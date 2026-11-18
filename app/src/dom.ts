@@ -35,6 +35,34 @@ export function findingItem(f: Finding, level: "h3" | "h4" = "h4"): HTMLElement 
   );
 }
 
+/**
+ * Asks a question that needs an answer before going on, in a modal box: its heading is the question, focus starts on
+ * the safe answer (`no`), stays inside the box, and Escape means no. Focus goes back where it was. Resolves true for yes.
+ */
+export function ask(question: string, detail: string, yes: string, no: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const yesButton = h("button", { type: "button", class: "button button--primary" }, yes);
+    const noButton = h("button", { type: "button", class: "button" }, no);
+    const box = h("dialog", { class: "ask", "aria-labelledby": "ask-question", "aria-describedby": "ask-detail" }, h("h2", { id: "ask-question" }, question), h("p", { id: "ask-detail" }, detail), h("div", { class: "play-start" }, noButton, yesButton));
+    const done = (answer: boolean) => {
+      box.close();
+      box.remove();
+      before?.focus();
+      resolve(answer);
+    };
+    yesButton.addEventListener("click", () => done(true));
+    noButton.addEventListener("click", () => done(false));
+    box.addEventListener("cancel", (e) => {
+      e.preventDefault();
+      done(false);
+    });
+    document.body.append(box);
+    box.showModal();
+    noButton.focus();
+  });
+}
+
 /** Puts text on the clipboard, with the old way as a fallback for a window that refuses the new one. */
 export async function copyText(text: string): Promise<void> {
   try {

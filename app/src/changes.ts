@@ -44,6 +44,8 @@ export class PackageChanges {
   options: ShrinkOptions = { ...DEFAULT_SHRINK };
   results: ShrinkResult[] = [];
   savedAs = "";
+  /** The changes as they were when last saved, to tell whether any are waiting that no saved package holds. */
+  private savedKey = "";
   /** The language the package was last translated into, for the new package's name. */
   language?: string;
   private saved?: Uint8Array;
@@ -78,10 +80,22 @@ export class PackageChanges {
   rememberSaved(bytes: Uint8Array, name: string): void {
     this.saved = bytes;
     this.savedAs = name;
+    this.savedKey = this.key();
+  }
+  /** Whether there are changes that would be lost: made, and not in the package last saved. */
+  get unsaved(): boolean {
+    return this.changes.size > 0 && this.key() !== this.savedKey;
+  }
+  private key(): string {
+    return [...this.changes.values()].map((c) => [c.path, c.data.length, c.how].join("|")).join("\n");
   }
   get savedBytes(): Uint8Array | undefined {
     return this.saved;
   }
+}
+
+function filesWord(n: number): string {
+  return n === 1 ? "1 file" : `${n} files`;
 }
 
 function baseName(fileName: string): string {
@@ -140,6 +154,7 @@ export function openChanges(state: PackageChanges, host: ChangesHost): void {
     input.addEventListener("change", () => {
       change(input.checked);
       drawSummary();
+      drawChanges();
     });
     // The check box's label is only its name; the figures beside it have names of their own.
     return h("div", { class: "option" }, h("div", { class: "option-label" }, h("label", {}, input, " ", h("strong", {}, label)), ...extra), h("p", { class: "muted option-detail" }, detail));
@@ -190,7 +205,7 @@ export function openChanges(state: PackageChanges, host: ChangesHost): void {
     const saved = kept.reduce((n, x) => n + x.before - x.after, 0);
     results.replaceChildren(
       h("h3", {}, "What was made smaller"),
-      h("p", {}, `${kept.length} of ${state.results.length} files made smaller, saving ${formatBytes(saved)}.`),
+      h("p", {}, `${kept.length} of ${filesWord(state.results.length)} made smaller, saving ${formatBytes(saved)}.`),
       h(
         "div",
         { class: "table-wrap" },
@@ -255,7 +270,7 @@ export function openChanges(state: PackageChanges, host: ChangesHost): void {
     drawSummary();
     drawChanges();
     const kept = state.results.filter((x) => x.kept);
-    host.say(stop ? `Stopped. ${kept.length} files were made smaller before that.` : `Done. ${kept.length} of ${state.results.length} files made smaller, saving ${formatBytes(kept.reduce((n, x) => n + x.before - x.after, 0))}. Nothing is saved until you choose Save as a new package.`);
+    host.say(stop ? `Stopped. ${kept.length === 1 ? "1 file was" : `${kept.length} files were`} made smaller before that.` : `Done. ${kept.length} of ${filesWord(state.results.length)} made smaller, saving ${formatBytes(kept.reduce((n, x) => n + x.before - x.after, 0))}. Nothing is saved until you choose Save as a new package.`);
   });
   stopButton.addEventListener("click", () => {
     stop = true;

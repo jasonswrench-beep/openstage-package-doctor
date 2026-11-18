@@ -70,7 +70,8 @@ const STYLE = `
     main.full { padding: 0; }
     iframe { flex: 1 1 auto; width: 100%; min-height: 420px; border: 1px solid #c9ced6; }
     main.full iframe { border: 0; }
-    video { width: 100%; max-height: 80vh; background: #000000; }
+    video { width: 100%; max-height: 80vh; background: #000000; color: #ffffff; }
+    video a { color: #9ecbff; }
     a { color: #0b4fb3; }
     button { font: inherit; padding: 6px 16px; border: 2px solid #1d4f8f; border-radius: 6px; background: #1d4f8f; color: #ffffff; cursor: pointer; }
     button:disabled { background: #ffffff; color: #1d4f8f; cursor: default; }
