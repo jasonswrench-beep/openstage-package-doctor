@@ -16,6 +16,8 @@ call npm test
 set APP=%errorlevel%
 call npx tsc --noEmit
 popd
+call node --test tools\build-installer.test.mjs
+set TOOLS=%errorlevel%
 set RUST=0
 where cargo >nul 2>nul
 if not errorlevel 1 (
@@ -28,5 +30,5 @@ if not errorlevel 1 (
 )
 
 echo.
-if "%CORE%%APP%%RUST%"=="000" (echo All tests passed.) else (echo Some tests failed. Scroll up to see which.)
+if "%CORE%%APP%%TOOLS%%RUST%"=="0000" (echo All tests passed.) else (echo Some tests failed. Scroll up to see which.)
 pause

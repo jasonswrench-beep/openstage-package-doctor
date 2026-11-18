@@ -37,6 +37,8 @@ Anything not on `ROADMAP.md` is agreed with the user first.
   browser's own codecs (WebCodecs), reading MP4 with mp4box.js and writing it with mp4-muxer. No ffmpeg: it is LGPL
   or GPL. Saving uses the window's Save As box (`showSaveFilePicker`); WebView2 will not save into system folders
   such as AppData.
+- `tools/`: `build-installer.mjs` makes the release's installer (`--sign` signs it, only from the tagged commit) and
+  `sign_windows.py` is the suite's shared signing script, unchanged. `docs/releasing.md` is how a release is made.
 - `branding/OpenStage_Package_Doctor.svg` is the program's icon (the author's, November 17, 2026). `app/web/logo.svg`
   is a copy of it, and `app/src-tauri/icons/` is made from it with `npx tauri icon` (then delete the android and ios
   folders it adds).
